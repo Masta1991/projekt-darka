@@ -18,8 +18,8 @@ if "authenticated" not in st.session_state:
 
 def check_password():
     def password_entered():
-        # You can change '1234' to anything you want
-        if st.session_state["password"] == st.secrets.get("access_code", "1234"):
+        # Updated password
+        if st.session_state["password"] == st.secrets.get("access_code", "170491"):
             st.session_state.authenticated = True
             del st.session_state["password"]
         else:
@@ -72,12 +72,7 @@ def get_clients():
     if not df.empty:
         return df.iloc[:, 0].tolist()
     
-    # Fallback to local file (relative path)
-    file_path = "Dokumenty/Klienci/Klienci.txt"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            return [line.strip() for line in f.readlines() if line.strip()]
-    return ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
+    return ["Maciej Stawski", "Paweł Frencel", "Pawel", "Ewa", "Ania", "Justyna"]
 
 def add_client(name):
     # Always try cloud first
@@ -342,6 +337,7 @@ with col_main:
             st.button("✅ KONIEC EDYCJI" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
+            edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             full_html = f'<div class="calendar-wrapper {edit_cls}">'
             # Calculate dates for the current week (starting Monday)
             start_of_week = sel_date - datetime.timedelta(days=sel_date.weekday())
@@ -425,19 +421,22 @@ with col_main:
         
         # Get query params or defaults
         q_client = st.query_params.get("client", "Maciej Stawski")
-        q_hour = int(st.query_params.get("hour", "12"))
-        q_date = st.query_params.get("date", datetime.date.today().strftime("%Y-%m-%d"))
+        q_hour_default = int(st.query_params.get("hour", "12"))
+        q_date_default = datetime.datetime.strptime(st.query_params.get("date", datetime.date.today().strftime("%Y-%m-%d")), "%Y-%m-%d").date()
         
         # Initialization of state for exercises if not exists
         if 'add_data_exercises' not in st.session_state:
             st.session_state.add_data_exercises = {} # Format: {exercise_name: weight}
 
         # --- Top Navigation / Selection ---
-        col_c, col_t = st.columns([2, 1])
+        col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
             klient = st.selectbox("Podopieczny", get_clients(), index=0)
-        with col_t:
-            st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{q_date}, {q_hour}:00</div>', unsafe_allow_html=True)
+        with col_d:
+            q_date = st.date_input("Data", value=q_date_default)
+            q_date_str = q_date.strftime("%Y-%m-%d")
+        with col_h:
+            q_hour = st.number_input("Godzina", min_value=6, max_value=22, value=q_hour_default)
 
         st.divider()
         c1, c2 = st.columns(2)
@@ -610,13 +609,13 @@ with col_main:
                     
                     # 2. Save summary to schedule state & Google Sheet
                     ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
-                    st.session_state.schedule_data[(q_date, q_hour)] = {
+                    st.session_state.schedule_data[(q_date_str, q_hour)] = {
                         'name': klient, 
                         'type': main_part.capitalize(), 
                         'info': ex_summary,
                         'status': 'active'
                     }
-                    st.session_state.dh.update_calendar_event(q_date, q_hour, klient, main_part.capitalize(), 'active')
+                    st.session_state.dh.update_calendar_event(q_date_str, q_hour, klient, main_part.capitalize(), 'active')
                     
                     st.success("Trening zapisany w Google Sheets!")
                     time.sleep(1)
@@ -625,9 +624,55 @@ with col_main:
                 else:
                     st.error("Wybierz przynajmniej jedno ćwiczenie!")
 
+    elif st.session_state.page == "settings":
+        st.markdown('<div class="header-section"><div class="page-title">⚙️ Ustawienia Aplikacji</div></div>', unsafe_allow_html=True)
+        
+        st.warning("⚠️ Ta sekcja zawiera narzędzia administracyjne.")
+        
+        if st.button("🚨 RESTART BAZY DANYCH", type="primary", use_container_width=True):
+            with st.spinner("Czyścimy stare dane i dodajemy nowych klientów..."):
+                try:
+                    # 1. Clear Kalendarz
+                    ws_cal = st.session_state.dh.get_worksheet("Kalendarz")
+                    if ws_cal:
+                        ws_cal.clear()
+                        ws_cal.append_row(["Dzień", "Godzina", "Klient", "Typ", "Status"])
+                    
+                    # 2. Clear and reset Klienci
+                    ws_cli = st.session_state.dh.get_worksheet("Klienci")
+                    if ws_cli:
+                        ws_cli.clear()
+                        ws_cli.append_row(["Imię i Nazwisko", "Data dołączenia", "Notatki"])
+                        nowi_klienci = [
+                            ["Maciej Stawski", "2026-05-08", ""],
+                            ["Paweł Frencel", "2026-05-08", ""],
+                            ["Pawel", "2026-05-08", ""],
+                            ["Ewa", "2026-05-08", ""],
+                            ["Ania", "2026-05-08", ""],
+                            ["Justyna", "2026-05-08", ""]
+                        ]
+                        for k in nowi_klienci:
+                            ws_cli.append_row(k)
+                    
+                    # 3. Clear Treningi
+                    ws_tre = st.session_state.dh.get_worksheet("Treningi")
+                    if ws_tre:
+                        ws_tre.clear()
+                        ws_tre.append_row(["Timestamp", "Klient", "Ćwiczenie", "Obciążenie", "Tydzień"])
+                        
+                    st.success("Baza danych została zrestartowana pomyślnie!")
+                    time.sleep(2)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Błąd podczas restartu: {e}")
+
+        if st.button("🏠 POWRÓT DO MENU", use_container_width=True):
+            st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+
     else:
-        st.markdown(f"Sekcja {st.session_state.page} w budowie...")
-        if st.button("POWRÓT"): st.session_state.page = "home"; st.rerun()
+        st.markdown(f'<div class="header-section"><div class="page-title">🏗️ Sekcja {st.session_state.page} w budowie</div></div>', unsafe_allow_html=True)
+        if st.button("🏠 POWRÓT DO MENU", use_container_width=True):
+            st.query_params.clear(); st.session_state.page = "home"; st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
