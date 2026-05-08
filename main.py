@@ -60,10 +60,9 @@ def check_password():
 check_password()
 
 # --- Navigation Logic ---
-if "page" in st.query_params:
-    st.session_state.page = st.query_params["page"]
-else:
-    st.session_state.page = "home"
+# session_state is master - only read query_params on first load
+if 'page' not in st.session_state:
+    st.session_state.page = st.query_params.get("page", "home")
 
 # --- CSS Injection (Premium Dark) ---
 # --- Data Handlers ---
@@ -193,6 +192,16 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+    
+    /* Hide tile nav buttons - tiles handle clicks visually */
+    [data-testid="stButton"] button[kind="secondary"] {
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -209,7 +218,6 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
-    # Use st.button for reliable session-preserving navigation
     clicked = st.button(
         f"{title}",
         key=f"tile_btn_{page_name}",
@@ -217,10 +225,10 @@ def bento_tile(label, title, desc, img, page_name):
     )
     if clicked:
         st.session_state.page = page_name
+        st.query_params.clear()
         st.rerun()
-    # Render visual tile on top (CSS hides the button)
     st.markdown(f"""
-        <div class="tile-link" style="margin-top:-46px; pointer-events:none;">
+        <div class="tile-link" style="margin-top:-4px; pointer-events:none;">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -272,7 +280,12 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
     try:
         parts = dict(p.split('=') for p in js_data.split('&'))
         action = parts.get('action')
-        if action == "delete":
+        if action == "nav":
+            st.session_state.page = parts.get("page", "home")
+            if "client" in parts: st.query_params["client"] = parts["client"]
+            if "h" in parts: st.query_params["hour"] = parts["h"]
+            if "date" in parts: st.query_params["date"] = parts["date"]
+        elif action == "delete":
             date_str, h_p = parts.get("d"), int(parts.get("h", -1))
             if (date_str, h_p) in st.session_state.schedule_data:
                 st.session_state.schedule_data[(date_str, h_p)]['status'] = 'deleted'
@@ -381,18 +394,16 @@ with col_main:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
                             cell_content = f"""
-                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" data-action="action=nav&page=add_data&client={event['name']}&h={h}&date={date_str}">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
-                                    <a href="?page=add_data&client={event['name']}&hour={h}&date={date_str}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
-                                        <div class="event-name" draggable="false">{event['name']}</div>
-                                        <div class="event-type" draggable="false">{event['type']}</div>
-                                    </a>
+                                    <div class="event-name" draggable="false">{event['name']}</div>
+                                    <div class="event-type" draggable="false">{event['type']}</div>
                                 </div>
                             """
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        cell_content = f'<div class="add-btn"><a href="?page=add_data&hour={h}&date={date_str}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
+                        cell_content = f'<div class="add-btn" data-action="action=nav&page=add_data&h={h}&date={date_str}">+</div>'
                     
                     full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">{cell_content}</div>'
                 full_html += '</div>'
@@ -588,6 +599,7 @@ with col_main:
             if st.button("🏠 POWRÓT", use_container_width=True):
                 st.session_state.add_data_exercises = {}
                 st.session_state.page = "home"
+                st.query_params.clear()
                 st.rerun()
         with f_col2:
             if st.button("🗑️ WYCZYŚĆ", use_container_width=True):
@@ -595,24 +607,25 @@ with col_main:
                 st.rerun()
         with f_col3:
             if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
-                if st.session_state.add_data_exercises:
-                    with st.spinner("Zapisywanie..."):
-                        try:
+                with st.spinner("Zapisywanie..."):
+                    try:
+                        # Save exercises if any selected
+                        if st.session_state.add_data_exercises:
                             for ex_name, weight in st.session_state.add_data_exercises.items():
                                 st.session_state.dh.save_workout_result(klient, ex_name, weight, selected_date.isocalendar()[1])
-                            st.session_state.dh.update_calendar_event(q_date_str, selected_hour, klient, main_part.capitalize(), 'active')
-                            st.session_state.schedule_data[(q_date_str, selected_hour)] = {
-                                'name': klient, 'type': main_part.capitalize(), 'status': 'active'
-                            }
-                            st.success("✅ Trening zapisany!")
-                            time.sleep(1.5)
-                            st.session_state.add_data_exercises = {}
-                            st.session_state.page = "home"
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Błąd zapisu: {e}")
-                else:
-                    st.error("Wybierz przynajmniej jedno ćwiczenie!")
+                        # Always save the calendar slot
+                        training_type = main_part.capitalize() if 'main_part' in dir() else "Trening"
+                        st.session_state.dh.update_calendar_event(q_date_str, selected_hour, klient, training_type, 'active')
+                        st.session_state.schedule_data[(q_date_str, selected_hour)] = {
+                            'name': klient, 'type': training_type, 'status': 'active'
+                        }
+                        st.success("✅ Zapisano!")
+                        time.sleep(1.5)
+                        st.session_state.add_data_exercises = {}
+                        st.session_state.page = "home"
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Błąd zapisu: {e}")
 
 
     elif st.session_state.page == "clients":
