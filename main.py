@@ -200,8 +200,13 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
+    # Unique key for each tile button
+    if st.button(f"OPEN_{page_name}", key=f"tile_{page_name}", label_visibility="collapsed"):
+        st.session_state.page = page_name
+        st.rerun()
+
     st.markdown(f"""
-        <a href="/?page={page_name}" target="_self" class="tile-link">
+        <div class="tile-link" onclick="document.querySelectorAll('button[key=\\'tile_{page_name}\\']')[0].click()">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -209,7 +214,10 @@ def bento_tile(label, title, desc, img, page_name):
                 <div class="tile-title">{title}</div>
                 <div class="tile-desc">{desc}</div>
             </div>
-        </a>
+        </div>
+        <style>
+            button[key="tile_{page_name}"] {{ display: none; }}
+        </style>
     """, unsafe_allow_html=True)
 
 def get_pl_date(d):
@@ -361,21 +369,38 @@ with col_main:
                     if event:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
+                            # Hidden button for event click
+                            if st.button(f"EDIT_{date_str}_{h}", key=f"edit_{date_str}_{h}", label_visibility="collapsed"):
+                                st.query_params["client"] = event['name']
+                                st.query_params["hour"] = str(h)
+                                st.query_params["date"] = date_str
+                                st.session_state.page = "add_data"
+                                st.rerun()
+                                
                             cell_content = f"""
-                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="document.querySelectorAll('button[key=\\'edit_{date_str}_{h}\\']')[0].click()">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
-                                    <a href="/?page=add_data&client={event['name']}&hour={h}&date={date_str}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
-                                        <div class="event-name" draggable="false">{event['name']}</div>
-                                        <div class="event-type" draggable="false">{event['type']}</div>
-                                    </a>
+                                    <div class="event-name" draggable="false">{event['name']}</div>
+                                    <div class="event-type" draggable="false">{event['type']}</div>
                                 </div>
+                                <style>button[key="edit_{date_str}_{h}"] {{ display: none; }}</style>
                             """
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        cell_content = f'<div class="add-btn"><a href="/?page=add_data&hour={h}&date={date_str}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
-                    
-                    full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">{cell_content}</div>'
+                        # Hidden button for add click
+                        if st.button(f"ADD_{date_str}_{h}", key=f"add_{date_str}_{h}", label_visibility="collapsed"):
+                            st.query_params["hour"] = str(h)
+                            st.query_params["date"] = date_str
+                            st.session_state.page = "add_data"
+                            st.rerun()
+                        
+                        cell_content = f"""
+                            <div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">
+                                <div class="add-btn" onclick="document.querySelectorAll('button[key=\\'add_{date_str}_{h}\\']')[0].click()">+</div>
+                            </div>
+                            <style>button[key="add_{date_str}_{h}"] {{ display: none; }}</style>
+                        """
                 full_html += '</div>'
             full_html += '</div>'
             st.markdown(full_html, unsafe_allow_html=True)
@@ -594,8 +619,13 @@ with col_main:
                 </div>
                 """, unsafe_allow_html=True)
 
-        if st.button("⬅️ POWRÓT DO MENU", use_container_width=True):
-            st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+        # --- Footer Actions ---
+        st.divider()
+        f_col1, f_col2, f_col3 = st.columns([1, 1, 1])
+        with f_col1:
+            if st.button("🏠 POWRÓT", use_container_width=True):
+                st.session_state.add_data_exercises = {}
+                st.query_params.clear(); st.session_state.page = "home"; st.rerun()
         with f_col2:
             if st.button("🗑️ WYCZYŚĆ", use_container_width=True):
                 st.session_state.add_data_exercises = {}
@@ -603,24 +633,25 @@ with col_main:
         with f_col3:
             if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
                 if st.session_state.add_data_exercises:
-                    # 1. Save results to 'Treningi' sheet
-                    for ex_name, weight in st.session_state.add_data_exercises.items():
-                        st.session_state.dh.save_workout_result(klient, ex_name, weight, st.session_state.selected_week)
-                    
-                    # 2. Save summary to schedule state & Google Sheet
-                    ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
-                    st.session_state.schedule_data[(q_date_str, q_hour)] = {
-                        'name': klient, 
-                        'type': main_part.capitalize(), 
-                        'info': ex_summary,
-                        'status': 'active'
-                    }
-                    st.session_state.dh.update_calendar_event(q_date_str, q_hour, klient, main_part.capitalize(), 'active')
-                    
-                    st.success("Trening zapisany w Google Sheets!")
-                    time.sleep(1)
-                    st.session_state.add_data_exercises = {}
-                    st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+                    with st.spinner("Zapisywanie w Google Sheets..."):
+                        # 1. Save results to 'Treningi' sheet
+                        for ex_name, weight in st.session_state.add_data_exercises.items():
+                            st.session_state.dh.save_workout_result(klient, ex_name, weight, st.session_state.selected_week)
+                        
+                        # 2. Save summary to schedule state & Google Sheet
+                        ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
+                        st.session_state.schedule_data[(q_date_str, q_hour)] = {
+                            'name': klient, 
+                            'type': main_part.capitalize(), 
+                            'info': ex_summary,
+                            'status': 'active'
+                        }
+                        st.session_state.dh.update_calendar_event(q_date_str, q_hour, klient, main_part.capitalize(), 'active')
+                        
+                        st.success("Trening zapisany pomyślnie!")
+                        time.sleep(1.5)
+                        st.session_state.add_data_exercises = {}
+                        st.query_params.clear(); st.session_state.page = "home"; st.rerun()
                 else:
                     st.error("Wybierz przynajmniej jedno ćwiczenie!")
 
