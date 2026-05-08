@@ -200,13 +200,8 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
-    # Unique key for each tile button
-    if st.button(f"NAV_{page_name}", key=f"tile_{page_name}"):
-        st.session_state.page = page_name
-        st.rerun()
-
     st.markdown(f"""
-        <div class="tile-link" onclick="document.querySelectorAll('button[key=\\'tile_{page_name}\\']')[0].click()">
+        <div class="tile-link" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'NAV_{page_name}'); if(btn) btn.click();">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -215,9 +210,6 @@ def bento_tile(label, title, desc, img, page_name):
                 <div class="tile-desc">{desc}</div>
             </div>
         </div>
-        <style>
-            button[key="tile_{page_name}"] {{ display: none; }}
-        </style>
     """, unsafe_allow_html=True)
 
 def get_pl_date(d):
@@ -369,37 +361,20 @@ with col_main:
                     if event:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
-                            # Hidden button for event click
-                            if st.button(f"EDIT_{date_str}_{h}", key=f"edit_{date_str}_{h}"):
-                                st.query_params["client"] = event['name']
-                                st.query_params["hour"] = str(h)
-                                st.query_params["date"] = date_str
-                                st.session_state.page = "add_data"
-                                st.rerun()
-                                
                             cell_content = f"""
-                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="document.querySelectorAll('button[key=\\'edit_{date_str}_{h}\\']')[0].click()">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'EDIT_{date_str}_{h}'); if(btn) btn.click();">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
                                     <div class="event-name" draggable="false">{event['name']}</div>
                                     <div class="event-type" draggable="false">{event['type']}</div>
                                 </div>
-                                <style>button[key="edit_{date_str}_{h}"] {{ display: none; }}</style>
                             """
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        # Hidden button for add click
-                        if st.button(f"ADD_{date_str}_{h}", key=f"add_{date_str}_{h}"):
-                            st.query_params["hour"] = str(h)
-                            st.query_params["date"] = date_str
-                            st.session_state.page = "add_data"
-                            st.rerun()
-                        
                         cell_content = f"""
                             <div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">
-                                <div class="add-btn" onclick="document.querySelectorAll('button[key=\\'add_{date_str}_{h}\\']')[0].click()">+</div>
+                                <div class="add-btn" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'ADD_{date_str}_{h}'); if(btn) btn.click();">+</div>
                             </div>
-                            <style>button[key="add_{date_str}_{h}"] {{ display: none; }}</style>
                         """
                 full_html += '</div>'
             full_html += '</div>'
@@ -706,6 +681,39 @@ with col_main:
             st.query_params.clear(); st.session_state.page = "home"; st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Hidden Navigation Triggers (for State Preservation) ---
+with st.container():
+    st.markdown('<div style="display:none;">', unsafe_allow_html=True)
+    # Tiles
+    for p in ["add_data", "dashboard", "clients", "reports", "notes", "settings"]:
+        if st.button(f"NAV_{p}"):
+            st.session_state.page = p
+            st.rerun()
+    
+    # Calendar (only for current view to avoid too many buttons)
+    start_of_week = st.session_state.selected_date - datetime.timedelta(days=st.session_state.selected_date.weekday())
+    for i in range(6):
+        d_obj = start_of_week + datetime.timedelta(days=i)
+        d_str = d_obj.strftime("%Y-%m-%d")
+        for h in range(6, 22):
+            # Add buttons
+            if st.button(f"ADD_{d_str}_{h}"):
+                st.query_params["hour"] = str(h)
+                st.query_params["date"] = d_str
+                st.session_state.page = "add_data"
+                st.rerun()
+            # Edit buttons (if event exists)
+            key = (d_str, h)
+            if key in st.session_state.schedule_data:
+                ev = st.session_state.schedule_data[key]
+                if st.button(f"EDIT_{d_str}_{h}"):
+                    st.query_params["client"] = ev['name']
+                    st.query_params["hour"] = str(h)
+                    st.query_params["date"] = d_str
+                    st.session_state.page = "add_data"
+                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 js_code = """
 <script>
