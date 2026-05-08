@@ -201,7 +201,7 @@ def get_img(name):
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
     st.markdown(f"""
-        <div class="tile-link" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'NAV_{page_name}'); if(btn) btn.click();">
+        <div class="tile-link" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'NAV_{page_name}'); if(btn) btn.click();">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -362,7 +362,7 @@ with col_main:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
                             cell_content = f"""
-                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'EDIT_{date_str}_{h}'); if(btn) btn.click();">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'EDIT_{date_str}_{h}'); if(btn) btn.click();">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
                                     <div class="event-name" draggable="false">{event['name']}</div>
                                     <div class="event-type" draggable="false">{event['type']}</div>
@@ -373,7 +373,7 @@ with col_main:
                     else:
                         cell_content = f"""
                             <div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">
-                                <div class="add-btn" onclick="const btn = Array.from(window.parent.document.querySelectorAll('button')).find(el => el.innerText === 'ADD_{date_str}_{h}'); if(btn) btn.click();">+</div>
+                                <div class="add-btn" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'ADD_{date_str}_{h}'); if(btn) btn.click();">+</div>
                             </div>
                         """
                 full_html += '</div>'
