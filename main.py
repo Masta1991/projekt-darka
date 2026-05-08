@@ -209,8 +209,18 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
+    # Use st.button for reliable session-preserving navigation
+    clicked = st.button(
+        f"{title}",
+        key=f"tile_btn_{page_name}",
+        use_container_width=True
+    )
+    if clicked:
+        st.session_state.page = page_name
+        st.rerun()
+    # Render visual tile on top (CSS hides the button)
     st.markdown(f"""
-        <a href="?page={page_name}" target="_self" class="tile-link">
+        <div class="tile-link" style="margin-top:-46px; pointer-events:none;">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -218,7 +228,7 @@ def bento_tile(label, title, desc, img, page_name):
                 <div class="tile-title">{title}</div>
                 <div class="tile-desc">{desc}</div>
             </div>
-        </a>
+        </div>
     """, unsafe_allow_html=True)
 
 def get_pl_date(d):
@@ -438,11 +448,20 @@ with col_main:
             st.session_state.add_data_exercises = {} # Format: {exercise_name: weight}
 
         # --- Top Navigation / Selection ---
-        col_c, col_t = st.columns([2, 1])
+        col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
-            klient = st.selectbox("Podopieczny", get_clients(), index=0)
-        with col_t:
-            st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{q_date}, {q_hour}:00</div>', unsafe_allow_html=True)
+            clients_list = get_clients()
+            default_idx = clients_list.index(q_client) if q_client in clients_list else 0
+            klient = st.selectbox("Podopieczny", clients_list, index=default_idx)
+        with col_d:
+            try:
+                q_date_val = datetime.datetime.strptime(q_date, "%Y-%m-%d").date()
+            except:
+                q_date_val = datetime.date.today()
+            selected_date = st.date_input("Data", value=q_date_val)
+            q_date_str = selected_date.strftime("%Y-%m-%d")
+        with col_h:
+            selected_hour = st.number_input("Godzina", min_value=6, max_value=22, value=q_hour)
 
         st.divider()
         c1, c2 = st.columns(2)
@@ -564,11 +583,37 @@ with col_main:
         st.divider()
 
         # --- Footer Actions ---
-        f_col1, f_col2, f_col3 = st.columns([1, 1, 1])
+        f_col1, f_col2, f_col3 = st.columns([1, 1, 2])
         with f_col1:
-            if st.button("⬅️ POWRÓT", use_container_width=True):
+            if st.button("🏠 POWRÓT", use_container_width=True):
                 st.session_state.add_data_exercises = {}
-                st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+                st.session_state.page = "home"
+                st.rerun()
+        with f_col2:
+            if st.button("🗑️ WYCZYŚĆ", use_container_width=True):
+                st.session_state.add_data_exercises = {}
+                st.rerun()
+        with f_col3:
+            if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
+                if st.session_state.add_data_exercises:
+                    with st.spinner("Zapisywanie..."):
+                        try:
+                            for ex_name, weight in st.session_state.add_data_exercises.items():
+                                st.session_state.dh.save_workout_result(klient, ex_name, weight, selected_date.isocalendar()[1])
+                            st.session_state.dh.update_calendar_event(q_date_str, selected_hour, klient, main_part.capitalize(), 'active')
+                            st.session_state.schedule_data[(q_date_str, selected_hour)] = {
+                                'name': klient, 'type': main_part.capitalize(), 'status': 'active'
+                            }
+                            st.success("✅ Trening zapisany!")
+                            time.sleep(1.5)
+                            st.session_state.add_data_exercises = {}
+                            st.session_state.page = "home"
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Błąd zapisu: {e}")
+                else:
+                    st.error("Wybierz przynajmniej jedno ćwiczenie!")
+
 
     elif st.session_state.page == "clients":
         st.markdown('<div class="header-section"><div class="page-title">👥 Baza Podopiecznych</div></div>', unsafe_allow_html=True)
