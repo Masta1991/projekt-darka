@@ -32,14 +32,8 @@ def check_password():
     if not st.session_state.authenticated:
         st.markdown("""
         <style>
-            .login-box {
-                max-width: 420px; margin: 80px auto; padding: 50px 40px;
-                background: #1c1c1e; border-radius: 28px;
-                border: 1px solid #31d5f2; text-align: center;
-                box-shadow: 0 15px 50px rgba(0,0,0,0.6);
-            }
-            .login-title { color: white; font-size: 28px; font-weight: 800; margin: 16px 0 8px; }
-            .login-sub { color: #8b949e; font-size: 13px; margin-bottom: 32px; }
+            /* Center the login box */
+            .block-container { padding-top: 4rem !important; }
             /* Large password input */
             .stTextInput > div > div > input {
                 background-color: #0d1117 !important;
@@ -48,16 +42,16 @@ def check_password():
                 border-radius: 16px !important;
                 text-align: center !important;
                 font-size: 32px !important;
-                letter-spacing: 10px !important;
+                letter-spacing: 12px !important;
                 padding: 20px !important;
                 height: 80px !important;
             }
+            .stTextInput > div > div > input::placeholder { letter-spacing: 8px; font-size: 24px; }
             .stTextInput > div > div > input:focus {
-                border-color: #31d5f2 !important;
                 box-shadow: 0 0 20px rgba(49,213,242,0.3) !important;
             }
             /* Large login button */
-            .stButton > button {
+            div[data-testid="stButton"] > button {
                 background: linear-gradient(135deg, #31d5f2, #0099bb) !important;
                 color: #000 !important;
                 font-size: 20px !important;
@@ -65,32 +59,36 @@ def check_password():
                 height: 70px !important;
                 border-radius: 16px !important;
                 border: none !important;
-                width: 100% !important;
-                margin-top: 20px !important;
                 letter-spacing: 2px !important;
-                transition: all 0.2s !important;
             }
-            .stButton > button:hover {
+            div[data-testid="stButton"] > button:hover {
                 transform: translateY(-2px) !important;
                 box-shadow: 0 8px 25px rgba(49,213,242,0.4) !important;
             }
-            .stTextInput label { display: none !important; }
         </style>
         """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            st.markdown('<div style="color:#31d5f2; font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">PROJEKT DARKA</div>', unsafe_allow_html=True)
-            st.markdown('<div class="login-title">🔐 Kod Dostępu</div>', unsafe_allow_html=True)
-            st.markdown('<div class="login-sub">Wpisz kod i naciśnij ZALOGUJ</div>', unsafe_allow_html=True)
-            pwd = st.text_input("Kod", type="password", key="password", label_visibility="collapsed", placeholder="• • • • • •")
+        _, col, _ = st.columns([1, 2, 1])
+        with col:
+            # Header - pure markdown, no Streamlit widgets mixed in
+            st.markdown("""
+            <div style="background:#1c1c1e; border:1px solid #31d5f2; border-radius:28px;
+                        padding:40px 32px 12px; text-align:center; margin-bottom:0;
+                        box-shadow: 0 15px 50px rgba(0,0,0,0.6);">
+                <div style="color:#31d5f2; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">PROJEKT DARKA</div>
+                <div style="color:white; font-size:26px; font-weight:800; margin:12px 0 6px;">🔐 Kod Dostępu</div>
+                <div style="color:#8b949e; font-size:13px; margin-bottom:24px;">Wpisz kod i naciśnij ZALOGUJ</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Streamlit elements AFTER markdown - they render here in sequence
+            pwd = st.text_input("Kod", type="password", key="password",
+                                label_visibility="collapsed", placeholder="• • • • • •")
             if st.button("🔓  ZALOGUJ", use_container_width=True):
                 password_entered()
                 if st.session_state.authenticated:
                     st.rerun()
-            st.markdown('<p style="color:#555; font-size:11px; margin-top:20px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#444; font-size:11px; text-align:center; margin-top:12px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
         st.stop()
 
 check_password()
