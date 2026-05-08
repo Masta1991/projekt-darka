@@ -45,11 +45,19 @@ class DataHandler:
             return pd.DataFrame(ws.get_all_records())
         return pd.DataFrame()
 
-    def update_calendar_event(self, day, hour, client, training_type, status='active'):
+    def update_calendar_event(self, date_str, hour, client, training_type, status='active'):
         ws = self.get_worksheet("Kalendarz")
         if ws:
-            # Simple append for now, more complex logic (find and update) could be added later
-            ws.append_row([day, hour, client, training_type, status])
+            # Check if event already exists for this date and hour to update instead of append
+            data = ws.get_all_records()
+            for i, row in enumerate(data):
+                if str(row.get('Dzień')) == str(date_str) and int(row.get('Godzina')) == int(hour):
+                    ws.update_cell(i + 2, 3, client)
+                    ws.update_cell(i + 2, 4, training_type)
+                    ws.update_cell(i + 2, 5, status)
+                    return True
+            
+            ws.append_row([str(date_str), hour, client, training_type, status])
             return True
         return False
 

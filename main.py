@@ -12,6 +12,49 @@ import streamlit.components.v1 as components
 # --- Page Config ---
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
+# --- Authentication ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+def check_password():
+    def password_entered():
+        # You can change '1234' to anything you want
+        if st.session_state["password"] == st.secrets.get("access_code", "1234"):
+            st.session_state.authenticated = True
+            del st.session_state["password"]
+        else:
+            st.error("❌ Błędny kod dostępu")
+
+    if not st.session_state.authenticated:
+        st.markdown("""
+        <style>
+            .login-box {
+                max-width: 400px; margin: 100px auto; padding: 40px;
+                background: #1c1c1e; border-radius: 24px;
+                border: 1px solid #31d5f2; text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            }
+            .stTextInput>div>div>input {
+                background-color: #0d1117 !important;
+                color: white !important;
+                border: 1px solid #333 !important;
+                text-align: center; font-size: 24px !important;
+                letter-spacing: 5px;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        with st.container():
+            st.markdown('<div class="login-box">', unsafe_allow_html=True)
+            st.markdown('<div class="tile-label">PROJEKT DARKA</div>', unsafe_allow_html=True)
+            st.markdown('<h2 style="color:white; margin-bottom:30px;">🔐 Kod dostępu</h2>', unsafe_allow_html=True)
+            st.text_input("Wpisz kod", type="password", on_change=password_entered, key="password")
+            st.markdown('<p style="color:#8b949e; font-size:12px; margin-top:20px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        st.stop()
+
+check_password()
+
 # --- Navigation Logic ---
 if "page" in st.query_params:
     st.session_state.page = st.query_params["page"]
@@ -58,6 +101,15 @@ def local_css():
     /* Layout */
     .main-layout { display: flex; gap: 30px; }
     
+    @media (max-width: 900px) {
+        .main-layout { flex-direction: column; gap: 15px; }
+        .stColumn { width: 100% !important; flex: 1 1 auto !important; }
+        .calendar-wrapper { overflow-x: auto; padding: 10px; }
+        .calendar-row, .calendar-grid-header { min-width: 600px; }
+        .tile-link { height: 80px; }
+        .tile-title { font-size: 16px; }
+    }
+
     /* Tile Link Styling - Sidebar */
     .tile-link {
         text-decoration: none !important;
@@ -171,28 +223,18 @@ def get_pl_date(d):
     return f"{days_pl[d.weekday()]}, {d.day} {months[d.month-1]}"
 
 # --- State ---
-@st.cache_resource
 def get_global_schedule():
     df = st.session_state.dh.fetch_calendar()
     data = {}
     if not df.empty:
         for _, row in df.iterrows():
-            # Convert Day/Hour to tuple key
-            key = (int(row['Dzień']), int(row['Godzina']))
+            # Key is now (date_string, hour)
+            key = (str(row['Dzień']), int(row['Godzina']))
             data[key] = {
                 'name': row['Klient'],
                 'type': row['Typ'],
                 'status': row['Status']
             }
-    else:
-        # Fallback to initial dummy data if sheet is empty
-        clients_pool = get_clients()
-        exercises = ["Nogi", "Klatka", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
-        for d in range(6):
-            for h in [7, 8, 10, 11, 17, 18, 19]:
-                c_idx = (d + h) % len(clients_pool)
-                e_idx = (h) % len(exercises)
-                data[(d, h)] = {'name': clients_pool[c_idx], 'type': exercises[e_idx], 'status': 'active'}
     return data
 
 if 'schedule_data' not in st.session_state:
@@ -217,21 +259,21 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         parts = dict(p.split('=') for p in js_data.split('&'))
         action = parts.get('action')
         if action == "delete":
-            d_p, h_p = int(parts.get("d", -1)), int(parts.get("h", -1))
-            if (d_p, h_p) in st.session_state.schedule_data:
-                st.session_state.schedule_data[(d_p, h_p)]['status'] = 'deleted'
+            date_str, h_p = parts.get("d"), int(parts.get("h", -1))
+            if (date_str, h_p) in st.session_state.schedule_data:
+                st.session_state.schedule_data[(date_str, h_p)]['status'] = 'deleted'
                 # Update Google Sheets
-                event = st.session_state.schedule_data[(d_p, h_p)]
-                st.session_state.dh.update_calendar_event(d_p, h_p, event['name'], event['type'], 'deleted')
+                event = st.session_state.schedule_data[(date_str, h_p)]
+                st.session_state.dh.update_calendar_event(date_str, h_p, event['name'], event['type'], 'deleted')
         elif action == "move":
-            f_d, f_h = int(parts.get("fd", -1)), int(parts.get("fh", -1))
-            t_d, t_h = int(parts.get("td", -1)), int(parts.get("th", -1))
-            if (f_d, f_h) in st.session_state.schedule_data:
-                val = st.session_state.schedule_data.pop((f_d, f_h))
-                st.session_state.schedule_data[(t_d, t_h)] = val
+            f_date, f_h = parts.get("fd"), int(parts.get("fh", -1))
+            t_date, t_h = parts.get("td"), int(parts.get("th", -1))
+            if (f_date, f_h) in st.session_state.schedule_data:
+                val = st.session_state.schedule_data.pop((f_date, f_h))
+                st.session_state.schedule_data[(t_date, t_h)] = val
                 # Update Google Sheets (Delete old, Add new)
-                st.session_state.dh.update_calendar_event(f_d, f_h, val['name'], val['type'], 'deleted')
-                st.session_state.dh.update_calendar_event(t_d, t_h, val['name'], val['type'], 'active')
+                st.session_state.dh.update_calendar_event(f_date, f_h, val['name'], val['type'], 'deleted')
+                st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
         elif action == "sync_weight":
             ex = parts.get("ex")
             val = float(parts.get("val", 0))
@@ -300,28 +342,33 @@ with col_main:
             st.button("✅ KONIEC EDYCJI" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
-            edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             full_html = f'<div class="calendar-wrapper {edit_cls}">'
+            # Calculate dates for the current week (starting Monday)
+            start_of_week = sel_date - datetime.timedelta(days=sel_date.weekday())
+            week_dates = [start_of_week + datetime.timedelta(days=i) for i in range(6)]
+            
             days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
             full_html += '<div class="calendar-grid-header"><div class="day-header"></div>'
             for i, d_name in enumerate(days): 
-                today_cls = "today" if i == sel_date.weekday() else ""
-                full_html += f'<div class="day-header {today_cls}">{d_name}</div>'
+                d_obj = week_dates[i]
+                today_cls = "today" if d_obj == datetime.date.today() else ""
+                full_html += f'<div class="day-header {today_cls}">{d_name}<br><span style="font-size:10px; opacity:0.6;">{d_obj.day}.{d_obj.month}</span></div>'
             full_html += '</div>'
             
             for h in range(6, 22):
                 full_html += f'<div class="calendar-row"><div class="time-col">{h}:00</div>'
-                for d in range(6):
-                    key = (d, h)
+                for i, d_obj in enumerate(week_dates):
+                    date_str = d_obj.strftime("%Y-%m-%d")
+                    key = (date_str, h)
                     event = st.session_state.schedule_data.get(key)
                     cell_content = ""
                     if event:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
                             cell_content = f"""
-                                <div class="event-card" id="event_{d}_{h}" draggable="{drag_str}" data-drag-id="{d},{h}">
-                                    <div class="delete-btn" data-action-stop="action=delete&d={d}&h={h}">−</div>
-                                    <a href="/?page=add_data&client={event['name']}&hour={h}&day={d}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}">
+                                    <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
+                                    <a href="/?page=add_data&client={event['name']}&hour={h}&date={date_str}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
                                         <div class="event-name" draggable="false">{event['name']}</div>
                                         <div class="event-type" draggable="false">{event['type']}</div>
                                     </a>
@@ -330,9 +377,9 @@ with col_main:
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        cell_content = f'<div class="add-btn"><a href="/?page=add_data&hour={h}&day={d}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
+                        cell_content = f'<div class="add-btn"><a href="/?page=add_data&hour={h}&date={date_str}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
                     
-                    full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{d}" data-drop-h="{h}">{cell_content}</div>'
+                    full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">{cell_content}</div>'
                 full_html += '</div>'
             full_html += '</div>'
             st.markdown(full_html, unsafe_allow_html=True)
@@ -377,9 +424,9 @@ with col_main:
         st.markdown('<div class="header-section"><div class="page-title">📝 Rejestracja Treningu</div></div>', unsafe_allow_html=True)
         
         # Get query params or defaults
-        q_client = st.query_params.get("client", "Jan Kowalski")
+        q_client = st.query_params.get("client", "Maciej Stawski")
         q_hour = int(st.query_params.get("hour", "12"))
-        q_day = int(st.query_params.get("day", "0"))
+        q_date = st.query_params.get("date", datetime.date.today().strftime("%Y-%m-%d"))
         
         # Initialization of state for exercises if not exists
         if 'add_data_exercises' not in st.session_state:
@@ -390,7 +437,7 @@ with col_main:
         with col_c:
             klient = st.selectbox("Podopieczny", get_clients(), index=0)
         with col_t:
-            st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{["Pon", "Wt", "Śr", "Czw", "Pt", "Sob"][q_day]}, {q_hour}:00</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{q_date}, {q_hour}:00</div>', unsafe_allow_html=True)
 
         st.divider()
         c1, c2 = st.columns(2)
@@ -563,13 +610,13 @@ with col_main:
                     
                     # 2. Save summary to schedule state & Google Sheet
                     ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
-                    st.session_state.schedule_data[(q_day, q_hour)] = {
+                    st.session_state.schedule_data[(q_date, q_hour)] = {
                         'name': klient, 
                         'type': main_part.capitalize(), 
                         'info': ex_summary,
                         'status': 'active'
                     }
-                    st.session_state.dh.update_calendar_event(q_day, q_hour, klient, main_part.capitalize(), 'active')
+                    st.session_state.dh.update_calendar_event(q_date, q_hour, klient, main_part.capitalize(), 'active')
                     
                     st.success("Trening zapisany w Google Sheets!")
                     time.sleep(1)
