@@ -184,6 +184,9 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+    
+    /* Hidden Nav Container */
+    .hidden-nav { display: none !important; height: 0; overflow: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -201,7 +204,7 @@ def get_img(name):
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
     st.markdown(f"""
-        <div class="tile-link" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'NAV_{page_name}'); if(btn) btn.click();">
+        <div class="tile-link" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.trim() === 'NAV_{page_name}'); if(btn) btn.click();">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -362,7 +365,7 @@ with col_main:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
                             cell_content = f"""
-                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'EDIT_{date_str}_{h}'); if(btn) btn.click();">
+                                <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.trim() === 'EDIT_{date_str}_{h}'); if(btn) btn.click();">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
                                     <div class="event-name" draggable="false">{event['name']}</div>
                                     <div class="event-type" draggable="false">{event['type']}</div>
@@ -373,7 +376,7 @@ with col_main:
                     else:
                         cell_content = f"""
                             <div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">
-                                <div class="add-btn" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.innerText === 'ADD_{date_str}_{h}'); if(btn) btn.click();">+</div>
+                                <div class="add-btn" onclick="const btn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.trim() === 'ADD_{date_str}_{h}'); if(btn) btn.click();">+</div>
                             </div>
                         """
                 full_html += '</div>'
@@ -682,38 +685,35 @@ with col_main:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Hidden Navigation Triggers (for State Preservation) ---
-with st.container():
-    st.markdown('<div style="display:none;">', unsafe_allow_html=True)
-    # Tiles
-    for p in ["add_data", "dashboard", "clients", "reports", "notes", "settings"]:
-        if st.button(f"NAV_{p}"):
-            st.session_state.page = p
+# --- Hidden Navigation Triggers ---
+st.markdown('<div class="hidden-nav">', unsafe_allow_html=True)
+# Tiles
+for p in ["add_data", "dashboard", "clients", "reports", "notes", "settings"]:
+    if st.button(f"NAV_{p}"):
+        st.session_state.page = p
+        st.rerun()
+
+# Calendar
+start_of_week = st.session_state.selected_date - datetime.timedelta(days=st.session_state.selected_date.weekday())
+for i in range(6):
+    d_obj = start_of_week + datetime.timedelta(days=i)
+    d_str = d_obj.strftime("%Y-%m-%d")
+    for h in range(6, 22):
+        if st.button(f"ADD_{d_str}_{h}"):
+            st.query_params["hour"] = str(h)
+            st.query_params["date"] = d_str
+            st.session_state.page = "add_data"
             st.rerun()
-    
-    # Calendar (only for current view to avoid too many buttons)
-    start_of_week = st.session_state.selected_date - datetime.timedelta(days=st.session_state.selected_date.weekday())
-    for i in range(6):
-        d_obj = start_of_week + datetime.timedelta(days=i)
-        d_str = d_obj.strftime("%Y-%m-%d")
-        for h in range(6, 22):
-            # Add buttons
-            if st.button(f"ADD_{d_str}_{h}"):
+        key = (d_str, h)
+        if key in st.session_state.schedule_data:
+            ev = st.session_state.schedule_data[key]
+            if st.button(f"EDIT_{d_str}_{h}"):
+                st.query_params["client"] = ev['name']
                 st.query_params["hour"] = str(h)
                 st.query_params["date"] = d_str
                 st.session_state.page = "add_data"
                 st.rerun()
-            # Edit buttons (if event exists)
-            key = (d_str, h)
-            if key in st.session_state.schedule_data:
-                ev = st.session_state.schedule_data[key]
-                if st.button(f"EDIT_{d_str}_{h}"):
-                    st.query_params["client"] = ev['name']
-                    st.query_params["hour"] = str(h)
-                    st.query_params["date"] = d_str
-                    st.session_state.page = "add_data"
-                    st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 js_code = """
 <script>
