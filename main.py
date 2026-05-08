@@ -201,7 +201,7 @@ def get_img(name):
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
     # Unique key for each tile button
-    if st.button(f"OPEN_{page_name}", key=f"tile_{page_name}", label_visibility="collapsed"):
+    if st.button(f"NAV_{page_name}", key=f"tile_{page_name}"):
         st.session_state.page = page_name
         st.rerun()
 
@@ -370,7 +370,7 @@ with col_main:
                         if event['status'] == 'active':
                             drag_str = "true" if st.session_state.edit_mode else "false"
                             # Hidden button for event click
-                            if st.button(f"EDIT_{date_str}_{h}", key=f"edit_{date_str}_{h}", label_visibility="collapsed"):
+                            if st.button(f"EDIT_{date_str}_{h}", key=f"edit_{date_str}_{h}"):
                                 st.query_params["client"] = event['name']
                                 st.query_params["hour"] = str(h)
                                 st.query_params["date"] = date_str
@@ -389,7 +389,7 @@ with col_main:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
                         # Hidden button for add click
-                        if st.button(f"ADD_{date_str}_{h}", key=f"add_{date_str}_{h}", label_visibility="collapsed"):
+                        if st.button(f"ADD_{date_str}_{h}", key=f"add_{date_str}_{h}"):
                             st.query_params["hour"] = str(h)
                             st.query_params["date"] = date_str
                             st.session_state.page = "add_data"
