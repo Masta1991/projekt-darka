@@ -40,9 +40,9 @@ def check_password():
                 border: 2px solid #31d5f2 !important;
                 border-radius: 14px !important;
                 text-align: center !important;
-                font-size: 28px !important;
-                letter-spacing: 10px !important;
-                padding: 18px 16px !important;
+                font-size: 36px !important;
+                letter-spacing: 14px !important;
+                padding: 26px 16px !important;
             }
             .stTextInput > div > div > input:focus {
                 box-shadow: 0 0 20px rgba(49,213,242,0.25) !important;
@@ -65,12 +65,12 @@ def check_password():
         _, col, _ = st.columns([1, 2, 1])
         with col:
             st.markdown("""
-            <div style="background:#1c1c1e; border:1px solid #31d5f2; border-radius:28px;
-                        padding:40px 32px 32px; text-align:center;
-                        box-shadow: 0 15px 50px rgba(0,0,0,0.6); margin-bottom:24px;">
-                <div style="color:#31d5f2; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">PROJEKT DARKA</div>
-                <div style="color:white; font-size:26px; font-weight:800; margin:12px 0 6px;">🔐 Kod Dostępu</div>
-                <div style="color:#8b949e; font-size:13px;">Wpisz kod i naciśnij ZALOGUJ</div>
+            <div style="background:#1c1c1e; border:1px solid #31d5f2; border-radius:20px;
+                        padding:20px 28px; text-align:center;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom:20px;">
+                <div style="color:#31d5f2; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">TRAINER PRO</div>
+                <div style="color:white; font-size:20px; font-weight:800; margin:6px 0 4px;">🔐 Kod Dostępu</div>
+                <div style="color:#8b949e; font-size:12px;">Wpisz kod i naciśnij ZALOGUJ</div>
             </div>
             """, unsafe_allow_html=True)
 
