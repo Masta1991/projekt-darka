@@ -32,38 +32,32 @@ def check_password():
     if not st.session_state.authenticated:
         st.markdown("""
         <style>
-            /* Center the login box */
-            .block-container { padding-top: 4rem !important; }
-            /* Large password input */
+            .block-container { padding-top: 3rem !important; }
+            /* Large password input - use padding not height */
             .stTextInput > div > div > input {
                 background-color: #0d1117 !important;
                 color: white !important;
                 border: 2px solid #31d5f2 !important;
-                border-radius: 16px !important;
+                border-radius: 14px !important;
                 text-align: center !important;
-                font-size: 32px !important;
-                letter-spacing: 12px !important;
-                padding: 20px !important;
-                height: 80px !important;
+                font-size: 28px !important;
+                letter-spacing: 10px !important;
+                padding: 18px 16px !important;
             }
-            .stTextInput > div > div > input::placeholder { letter-spacing: 8px; font-size: 24px; }
             .stTextInput > div > div > input:focus {
-                box-shadow: 0 0 20px rgba(49,213,242,0.3) !important;
+                box-shadow: 0 0 20px rgba(49,213,242,0.25) !important;
             }
-            /* Large login button */
+            /* Large login button - use padding not height */
             div[data-testid="stButton"] > button {
                 background: linear-gradient(135deg, #31d5f2, #0099bb) !important;
                 color: #000 !important;
-                font-size: 20px !important;
+                font-size: 18px !important;
                 font-weight: 800 !important;
-                height: 70px !important;
-                border-radius: 16px !important;
+                padding: 18px 24px !important;
+                border-radius: 14px !important;
                 border: none !important;
                 letter-spacing: 2px !important;
-            }
-            div[data-testid="stButton"] > button:hover {
-                transform: translateY(-2px) !important;
-                box-shadow: 0 8px 25px rgba(49,213,242,0.4) !important;
+                margin-top: 8px !important;
             }
         </style>
         """, unsafe_allow_html=True)
