@@ -33,27 +33,63 @@ def check_password():
         st.markdown("""
         <style>
             .login-box {
-                max-width: 400px; margin: 100px auto; padding: 40px;
-                background: #1c1c1e; border-radius: 24px;
+                max-width: 420px; margin: 80px auto; padding: 50px 40px;
+                background: #1c1c1e; border-radius: 28px;
                 border: 1px solid #31d5f2; text-align: center;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                box-shadow: 0 15px 50px rgba(0,0,0,0.6);
             }
-            .stTextInput>div>div>input {
+            .login-title { color: white; font-size: 28px; font-weight: 800; margin: 16px 0 8px; }
+            .login-sub { color: #8b949e; font-size: 13px; margin-bottom: 32px; }
+            /* Large password input */
+            .stTextInput > div > div > input {
                 background-color: #0d1117 !important;
                 color: white !important;
-                border: 1px solid #333 !important;
-                text-align: center; font-size: 24px !important;
-                letter-spacing: 5px;
+                border: 2px solid #31d5f2 !important;
+                border-radius: 16px !important;
+                text-align: center !important;
+                font-size: 32px !important;
+                letter-spacing: 10px !important;
+                padding: 20px !important;
+                height: 80px !important;
             }
+            .stTextInput > div > div > input:focus {
+                border-color: #31d5f2 !important;
+                box-shadow: 0 0 20px rgba(49,213,242,0.3) !important;
+            }
+            /* Large login button */
+            .stButton > button {
+                background: linear-gradient(135deg, #31d5f2, #0099bb) !important;
+                color: #000 !important;
+                font-size: 20px !important;
+                font-weight: 800 !important;
+                height: 70px !important;
+                border-radius: 16px !important;
+                border: none !important;
+                width: 100% !important;
+                margin-top: 20px !important;
+                letter-spacing: 2px !important;
+                transition: all 0.2s !important;
+            }
+            .stButton > button:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 8px 25px rgba(49,213,242,0.4) !important;
+            }
+            .stTextInput label { display: none !important; }
         </style>
         """, unsafe_allow_html=True)
-        
-        with st.container():
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
             st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            st.markdown('<div class="tile-label">PROJEKT DARKA</div>', unsafe_allow_html=True)
-            st.markdown('<h2 style="color:white; margin-bottom:30px;">🔐 Kod dostępu</h2>', unsafe_allow_html=True)
-            st.text_input("Wpisz kod", type="password", on_change=password_entered, key="password")
-            st.markdown('<p style="color:#8b949e; font-size:12px; margin-top:20px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
+            st.markdown('<div style="color:#31d5f2; font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">PROJEKT DARKA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-title">🔐 Kod Dostępu</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-sub">Wpisz kod i naciśnij ZALOGUJ</div>', unsafe_allow_html=True)
+            pwd = st.text_input("Kod", type="password", key="password", label_visibility="collapsed", placeholder="• • • • • •")
+            if st.button("🔓  ZALOGUJ", use_container_width=True):
+                password_entered()
+                if st.session_state.authenticated:
+                    st.rerun()
+            st.markdown('<p style="color:#555; font-size:11px; margin-top:20px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         st.stop()
 
@@ -192,16 +228,6 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
-    
-    /* Hide tile nav buttons - tiles handle clicks visually */
-    [data-testid="stButton"] button[kind="secondary"] {
-        visibility: hidden !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -218,17 +244,9 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
-    clicked = st.button(
-        f"{title}",
-        key=f"tile_btn_{page_name}",
-        use_container_width=True
-    )
-    if clicked:
-        st.session_state.page = page_name
-        st.query_params.clear()
-        st.rerun()
+    # Use data-action - JS bridge handles click without page reload
     st.markdown(f"""
-        <div class="tile-link" style="margin-top:-4px; pointer-events:none;">
+        <div class="tile-link" data-action="action=nav&page={page_name}">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
