@@ -33,31 +33,42 @@ def check_password():
         st.markdown("""
         <style>
             .block-container { padding-top: 3rem !important; }
-            /* Large password input - use padding not height */
+            /* === LARGE PASSWORD INPUT === */
+            .stTextInput { margin-bottom: 16px !important; }
+            .stTextInput > div { min-height: 130px !important; }
+            .stTextInput > div > div {
+                min-height: 130px !important;
+                border-radius: 16px !important;
+                overflow: visible !important;
+            }
             .stTextInput > div > div > input {
                 background-color: #0d1117 !important;
                 color: white !important;
-                border: 2px solid #31d5f2 !important;
-                border-radius: 14px !important;
+                border: 3px solid #31d5f2 !important;
+                border-radius: 16px !important;
                 text-align: center !important;
-                font-size: 36px !important;
-                letter-spacing: 14px !important;
-                padding: 26px 16px !important;
+                font-size: 48px !important;
+                letter-spacing: 18px !important;
+                min-height: 130px !important;
+                padding: 40px 16px !important;
+                caret-color: #31d5f2 !important;
             }
             .stTextInput > div > div > input:focus {
-                box-shadow: 0 0 20px rgba(49,213,242,0.25) !important;
+                box-shadow: 0 0 25px rgba(49,213,242,0.35) !important;
+                outline: none !important;
             }
-            /* Large login button - use padding not height */
+            /* Eye icon button positioning */
+            .stTextInput > div > div > div[data-testid="InputInstructions"] { display: none; }
+            /* === ZALOGUJ BUTTON === */
             div[data-testid="stButton"] > button {
                 background: linear-gradient(135deg, #31d5f2, #0099bb) !important;
                 color: #000 !important;
-                font-size: 18px !important;
+                font-size: 20px !important;
                 font-weight: 800 !important;
-                padding: 18px 24px !important;
+                padding: 20px 24px !important;
                 border-radius: 14px !important;
                 border: none !important;
-                letter-spacing: 2px !important;
-                margin-top: 8px !important;
+                letter-spacing: 3px !important;
             }
         </style>
         """, unsafe_allow_html=True)
