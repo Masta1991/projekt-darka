@@ -1,0 +1,41 @@
+# SYSTEM_DIRECTIVE: TRAINER_APP_v1.0
+# LOCATION_ROOT: C:\Scripts\tdipu010
+# PURPOSE: Full-stack Personal Trainer Management Application
+# STACK: Python, Streamlit, Pandas, GSpread (Google Sheets API)
+
+[PROJECT_STRUCTURE]
+    - main.py: Główny skrypt aplikacji (frontend + logika biznesowa).
+    - requirements.txt: Lista bibliotek (streamlit, pandas, gspread, oauth2client).
+    - data_handler.py: Moduł odpowiedzialny za komunikację z Google Sheets.
+    - secrets.json: (Placeholder) Plik z kluczami API (nie udostępniać).
+
+[DATA_SCHEMA]
+    - Table: Treningi
+        Columns: [Data, Klient_ID, Rodzaj_Treningu, Partie_Ciala, Waga_KG, Uwagi_Maxy]
+    - Table: Pomiary
+        Columns: [Data, Klient_ID, Tkanka_Tluszczowa_Proc, Masa_Miesniowa_KG, Obwody_cm]
+
+[UI_SPECIFICATION]
+    - Theme: Clean, Professional, Dark/Light Mode.
+    - Navigation: 
+        1. Sidebar: Lista klientów, Dodaj nowe dane, Analiza raportów, Ustawienia.
+        2. Dashboard: Wykresy (Line charts dla wagi, Bar charts dla objętości treningowej).
+    - Input_Methods:
+        1. Web Form (Standard): Formularz z polami tekstowymi i drop-down.
+        2. Bulk/Paste: Pole tekstowe do wklejenia nieustrukturyzowanego tekstu (AI parsing).
+        3. OCR_Mode: Funkcja przesyłania zdjęcia notatnika (wymaga włączenia Vision API).
+
+[FUNCTIONAL_LOGIC_REQUIREMENTS]
+    1. Authorization: Google Sheets Service Account (oAuth).
+    2. Data_Processing:
+        - Jeśli dane wejściowe to notatka tekstowa -> AI musi wyekstrahować: Imię, Waga, Trening, Partie.
+        - Zapis danych: Timestamped, append-only do Google Sheets.
+    3. Report_Generation:
+        - Funkcja tworzenia PDF/Zestawienia dla klienta na podstawie zakresu dat.
+        - Obliczanie trendu (delta wagi, delta siły).
+
+[INSTRUCTIONS_FOR_AI_EXECUTION]
+    - Przy każdej modyfikacji kodu:
+        1. Sprawdź, czy `data_handler.py` obsługuje błędy połączenia (timeouty).
+        2. Utrzymuj responsywność interfejsu (Streamlit cache).
+        3. Generuj kod gotowy do uruchomienia (deployment-ready).
