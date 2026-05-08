@@ -2,10 +2,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import datetime
+import streamlit as st
 
 class DataHandler:
     def __init__(self, secrets_path='secrets.json'):
         self.secrets_path = secrets_path
+        self.scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        self.client = None
+        self.spreadsheet_name = "TrainerApp_Data"
 
     def authenticate(self):
         try:
