@@ -19,7 +19,11 @@ if "authenticated" not in st.session_state:
 def check_password():
     def password_entered():
         # You can change '1234' to anything you want
-        if st.session_state["password"] == st.secrets.get("access_code", "170491"):
+        try:
+            access_code = st.secrets.get("access_code", "170491")
+        except:
+            access_code = "170491"
+        if st.session_state["password"] == access_code:
             st.session_state.authenticated = True
             del st.session_state["password"]
         else:
@@ -342,6 +346,7 @@ with col_main:
             st.button("✅ KONIEC EDYCJI" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
+            edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             full_html = f'<div class="calendar-wrapper {edit_cls}">'
             # Calculate dates for the current week (starting Monday)
             start_of_week = sel_date - datetime.timedelta(days=sel_date.weekday())
@@ -368,7 +373,7 @@ with col_main:
                             cell_content = f"""
                                 <div class="event-card" id="event_{date_str}_{h}" draggable="{drag_str}" data-drag-id="{date_str},{h}">
                                     <div class="delete-btn" data-action-stop="action=delete&d={date_str}&h={h}">−</div>
-                                    <a href="/?page=add_data&client={event['name']}&hour={h}&date={date_str}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
+                                    <a href="?page=add_data&client={event['name']}&hour={h}&date={date_str}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
                                         <div class="event-name" draggable="false">{event['name']}</div>
                                         <div class="event-type" draggable="false">{event['type']}</div>
                                     </a>
@@ -377,7 +382,7 @@ with col_main:
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        cell_content = f'<div class="add-btn"><a href="/?page=add_data&hour={h}&date={date_str}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
+                        cell_content = f'<div class="add-btn"><a href="?page=add_data&hour={h}&date={date_str}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
                     
                     full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{date_str}" data-drop-h="{h}">{cell_content}</div>'
                 full_html += '</div>'
