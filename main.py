@@ -70,25 +70,24 @@ def check_password():
 
         _, col, _ = st.columns([1, 2, 1])
         with col:
-            # Header - pure markdown, no Streamlit widgets mixed in
             st.markdown("""
             <div style="background:#1c1c1e; border:1px solid #31d5f2; border-radius:28px;
-                        padding:40px 32px 12px; text-align:center; margin-bottom:0;
-                        box-shadow: 0 15px 50px rgba(0,0,0,0.6);">
+                        padding:40px 32px 32px; text-align:center;
+                        box-shadow: 0 15px 50px rgba(0,0,0,0.6); margin-bottom:24px;">
                 <div style="color:#31d5f2; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">PROJEKT DARKA</div>
                 <div style="color:white; font-size:26px; font-weight:800; margin:12px 0 6px;">🔐 Kod Dostępu</div>
-                <div style="color:#8b949e; font-size:13px; margin-bottom:24px;">Wpisz kod i naciśnij ZALOGUJ</div>
+                <div style="color:#8b949e; font-size:13px;">Wpisz kod i naciśnij ZALOGUJ</div>
             </div>
             """, unsafe_allow_html=True)
 
-            # Streamlit elements AFTER markdown - they render here in sequence
             pwd = st.text_input("Kod", type="password", key="password",
                                 label_visibility="collapsed", placeholder="• • • • • •")
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
             if st.button("🔓  ZALOGUJ", use_container_width=True):
                 password_entered()
                 if st.session_state.authenticated:
                     st.rerun()
-            st.markdown('<p style="color:#444; font-size:11px; text-align:center; margin-top:12px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color:#444; font-size:11px; text-align:center; margin-top:16px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
         st.stop()
 
 check_password()
