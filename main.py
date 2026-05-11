@@ -1,6 +1,7 @@
 import streamlit as st
+st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 import pandas as pd
-from data_handler import DataHandler
+from trainer_db import DataHandler
 import datetime
 import base64
 import os
@@ -10,7 +11,6 @@ from dateutil.relativedelta import relativedelta
 import streamlit.components.v1 as components
 
 # --- Page Config ---
-st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
 # Initialize DataHandler
 if 'dh' not in st.session_state:
@@ -771,8 +771,7 @@ with col_main:
 
         col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
-            # Fetch clients from Google Sheets with caching
-            @st.cache_data(ttl=600)
+            # Fetch clients from Google Sheets
             def get_clients_list():
                 try:
                     df_c = st.session_state.dh.fetch_clients()
