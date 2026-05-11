@@ -306,8 +306,13 @@ if (!parentDoc.getElementById('injected-global-script')) {
             document.body.addEventListener('click', (e) => {
                 const stopEl = e.target.closest('[data-action-stop]');
                 if (stopEl) {
-                    e.stopPropagation(); e.preventDefault();
-                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
+                    e.stopPropagation(); 
+                    const action = stopEl.getAttribute('data-action-stop');
+                    if (action && action !== "true") {
+                        e.preventDefault();
+                        window.sendActionToStreamlit(action);
+                    }
+                    // If it's "true", we just stopped propagation to avoid parent triggers
                     return;
                 }
                 const actionEl = e.target.closest('[data-action]');
@@ -706,12 +711,12 @@ with col_main:
                 if is_sel:
                     pill_html = (
                         f'<div class="pill-container" data-action-stop="true">'
-                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=1.25\')">+</div>'
+                        f'<div class="pill-btn" data-action="action=update_weight&ex={ex}&delta=-1.25">−</div>'
                         f'<div class="pill-display">'
                         f'<div class="pill-val">{weight:.2f}</div>'
                         f'<div class="pill-unit">kg</div>'
                         f'</div>'
-                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=-1.25\')">−</div>'
+                        f'<div class="pill-btn" data-action="action=update_weight&ex={ex}&delta=1.25">+</div>'
                         f'</div>'
                     )
                 
