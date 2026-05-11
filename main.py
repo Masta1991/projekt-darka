@@ -649,8 +649,7 @@ s.innerHTML = `
 
     /* Surgical Mobile Cleanup */
     @media (max-width: 1000px) {{
-        /* Target Streamlit columns containing desktop-only markers */
-        [data-testid="column"]:has(.desktop-only),
+        /* Target ONLY the specific blocks, NOT the columns */
         [data-testid="stVerticalBlock"] > div:has(.desktop-only) {{
             display: none !important;
             height: 0 !important;
