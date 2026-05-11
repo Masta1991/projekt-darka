@@ -391,6 +391,41 @@ def local_css():
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
 
+    /* MOBILE HEADER & MENU */
+    .mobile-header {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        background: #1c1c1e;
+        padding: 10px 20px;
+        border-radius: 16px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .mobile-menu-btn {
+        background: rgba(49, 213, 242, 0.1);
+        border: 1px solid #31d5f2;
+        color: #31d5f2;
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+    
+    @media (max-width: 900px) {
+        .mobile-header { display: flex; }
+        .calendar-wrapper { padding: 10px; border-radius: 16px; height: auto !important; min-height: 500px; }
+        .calendar-grid-header { top: -10px; }
+        .day-header:first-child, .time-col { left: -10px; }
+    }
+
+    /* LANDSCAPE OPTIMIZATION (Mobile Horizontal) */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .calendar-row { min-height: 60px !important; }
+        .calendar-wrapper { max-height: 85vh !important; }
+        .day-header { min-height: 30px !important; font-size: 10px !important; }
+    }
+
     /* ADD BUTTON (+) - Centered */
     .add-btn { 
         position: absolute; 
@@ -552,14 +587,36 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
     except Exception as e:
         pass
 
-# --- LAYOUT ---
-st.markdown('<div class="main-layout">', unsafe_allow_html=True)
-col_side, col_main = st.columns([1, 4])
+# --- LAYOUT LOGIC ---
+if 'show_mobile_menu' not in st.session_state:
+    st.session_state.show_mobile_menu = False
 
-with col_side:
-    sel_date = st.session_state.selected_date
-    day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == sel_date.weekday() and v['status'] == 'active']
+def render_sidebar_tiles():
+    st.markdown('<div class="part-label">MENU</div>', unsafe_allow_html=True)
     
+    tiles = [
+        {"id": "home", "label": "GRAFIK", "title": "Harmonogram", "desc": "Zarządzaj treningami", "img": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=400"},
+        {"id": "klienci", "label": "KLIENCI", "title": "Baza Osób", "desc": "Lista Twoich klientów", "img": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400"},
+        {"id": "statystyki", "label": "ANALIZA", "title": "Statystyki", "desc": "Wyniki i postępy", "img": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400"},
+        {"id": "raporty", "label": "RAPORTY", "title": "Podsumowania", "desc": "Dziennik treningowy", "img": "https://images.unsplash.com/photo-1454165833767-027ffea9e778?auto=format&fit=crop&q=80&w=400"},
+        {"id": "konfiguracja", "label": "USTAWIENIA", "title": "Konfiguracja", "desc": "Opcje aplikacji", "img": "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&q=80&w=400"}
+    ]
+    
+    for t in tiles:
+        active_border = "border-color: #31d5f2; background: #252528;" if st.session_state.page == t['id'] else ""
+        st.markdown(f"""
+            <a href="?page={t['id']}" class="tile-link" style="{active_border}" data-action="nav&page={t['id']}">
+                <img src="{t['img']}" class="tile-img">
+                <div class="tile-overlay"></div>
+                <div class="tile-content">
+                    <div class="tile-label">{t['label']}</div>
+                    <div class="tile-title">{t['title']}</div>
+                    <div class="tile-desc">{t['desc']}</div>
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+st.markdown('<div class="main-layout">', unsafe_allow_html=True)
     # Square Dowodzenie Panel with Permanent Calendar
     c = calendar.Calendar(firstweekday=0)
     month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
