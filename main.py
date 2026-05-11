@@ -585,10 +585,12 @@ def local_css():
     
     @media (max-width: 1000px) {
         .mobile-header { display: flex; }
-        .mobile-sidebar-content { display: none !important; } /* Hide bento tiles on mobile home */
+        .mobile-sidebar-content { display: none !important; }
         .mobile-nav-dropdown { display: flex; }
         .desktop-only { display: none !important; }
-        .calendar-main-view { display: none !important; } /* Hide hourly grid on mobile home */
+        .calendar-main-view { display: none !important; }
+        /* Extra safety: ensure bento tiles are hidden even if they have other classes */
+        .tile-link.desktop-only { display: none !important; }
     }
 
     /* Mobile Responsive */
@@ -767,7 +769,7 @@ def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
     active_border = "border-color: #31d5f2; background: #252528;" if st.session_state.page == page_name else ""
     st.markdown(f"""
-        <div class="tile-link" style="{active_border}" data-action="action=nav&page={page_name}">
+        <div class="tile-link desktop-only" style="{active_border}" data-action="action=nav&page={page_name}">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
