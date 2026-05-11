@@ -323,33 +323,39 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* Date Picker Ultimate Fix */
-    div[data-baseweb="calendar"],
-    div[data-baseweb="calendar"] header,
-    div[data-baseweb="calendar"] [role="grid"],
-    div[data-baseweb="calendar"] [role="gridcell"],
-    div[data-baseweb="calendar"] [role="gridcell"] > div {
+    /* --- ULTIMATE CALENDAR FIX --- */
+    /* Root container */
+    [data-baseweb="popover"] [data-baseweb="calendar"] {
         background-color: #1c1c1e !important;
-        background: #1c1c1e !important;
         color: white !important;
     }
-
-    /* Fix the white boxes specifically */
-    div[data-baseweb="calendar"] [role="gridcell"] > div:not([aria-selected="true"]) {
+    
+    /* Header (Month/Year) */
+    [data-baseweb="calendar"] header {
+        background-color: #1c1c1e !important;
+    }
+    
+    /* All grid cells and their inner divs (Fix white blocks) */
+    [data-baseweb="calendar"] [role="gridcell"],
+    [data-baseweb="calendar"] [role="gridcell"] > div,
+    [data-baseweb="calendar"] [role="gridcell"] button {
         background-color: transparent !important;
-    }
-
-    div[data-baseweb="calendar"] [aria-selected="true"],
-    div[data-baseweb="calendar"] [aria-selected="true"] > div {
-        background-color: #31d5f2 !important;
-        color: #000 !important;
-    }
-
-    div[data-baseweb="calendar"] button {
+        background: transparent !important;
         color: white !important;
     }
 
-    div[data-baseweb="calendar"] svg {
+    /* THE SELECTION CIRCLE (Blue instead of red) */
+    [data-baseweb="calendar"] [aria-selected="true"] button,
+    [data-baseweb="calendar"] [aria-selected="true"] > div,
+    [data-baseweb="calendar"] [aria-selected="true"] {
+        background-color: #31d5f2 !important;
+        background: #31d5f2 !important;
+        color: black !important;
+        border-radius: 50% !important;
+    }
+
+    /* Arrows */
+    [data-baseweb="calendar"] svg {
         fill: #31d5f2 !important;
     }
 
