@@ -1,7 +1,6 @@
 import streamlit as st
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 import pandas as pd
-from trainer_db import DataHandler
 import datetime
 import base64
 import os
@@ -9,8 +8,77 @@ import time
 import calendar
 from dateutil.relativedelta import relativedelta
 import streamlit.components.v1 as components
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-# --- Page Config ---
+# --- Database Handler (Merged for Stability) ---
+class DataHandler:
+    def __init__(self, secrets_path='secrets.json'):
+        self.secrets_path = secrets_path
+        self.scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        self.client = None
+        self.spreadsheet_name = "TrainerApp_Data"
+
+    def authenticate(self):
+        try:
+            creds_dict = None
+            try:
+                creds_dict = st.secrets.get("gcp_service_account")
+            except Exception:
+                creds_dict = None
+
+            if creds_dict:
+                creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
+            else:
+                if os.path.exists(self.secrets_path):
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(self.secrets_path, self.scope)
+                else:
+                    return False
+            
+            self.client = gspread.authorize(creds)
+            return True
+        except Exception as e:
+            return False
+
+    def get_worksheet(self, worksheet_name):
+        if not self.client:
+            if not self.authenticate(): return None
+        try:
+            sh = self.client.open(self.spreadsheet_name)
+            return sh.worksheet(worksheet_name)
+        except Exception: return None
+
+    def fetch_calendar(self):
+        ws = self.get_worksheet("Kalendarz")
+        if ws: return pd.DataFrame(ws.get_all_records())
+        return pd.DataFrame()
+
+    def update_calendar_event(self, date_str, hour, client, training_type, status='active'):
+        ws = self.get_worksheet("Kalendarz")
+        if ws:
+            data = ws.get_all_records()
+            for i, row in enumerate(data):
+                if str(row.get('Dzień')) == str(date_str) and int(row.get('Godzina')) == int(hour):
+                    ws.update_cell(i + 2, 3, client)
+                    ws.update_cell(i + 2, 4, training_type)
+                    ws.update_cell(i + 2, 5, status)
+                    return True
+            ws.append_row([str(date_str), hour, client, training_type, status])
+            return True
+        return False
+
+    def save_workout_result(self, client, exercise, weight, week):
+        ws = self.get_worksheet("Treningi")
+        if ws:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ws.append_row([timestamp, client, exercise, weight, week])
+            return True
+        return False
+
+    def fetch_clients(self):
+        ws = self.get_worksheet("Klienci")
+        if ws: return pd.DataFrame(ws.get_all_records())
+        return pd.DataFrame()
 
 # Initialize DataHandler
 if 'dh' not in st.session_state:
