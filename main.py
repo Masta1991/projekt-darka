@@ -64,16 +64,11 @@ if (!parentDoc.getElementById('injected-global-script')) {
         if (!document.body.hasAttribute('data-drag-bound')) {
             document.body.setAttribute('data-drag-bound', 'true');
             document.body.addEventListener('click', (e) => {
-                const stopEl = e.target.closest('[data-action-stop]');
-                if (stopEl) {
-                    e.stopPropagation(); e.preventDefault();
-                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
-                    return;
-                }
-                const actionEl = e.target.closest('[data-action]');
+                const actionEl = e.target.closest('[data-action]') || e.target.closest('[data-action-stop]');
                 if (actionEl) {
-                    e.preventDefault();
-                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                    e.stopPropagation(); e.preventDefault();
+                    const action = actionEl.getAttribute('data-action') || actionEl.getAttribute('data-action-stop');
+                    window.sendActionToStreamlit(action);
                 }
             });
             document.body.addEventListener('dragstart', (e) => {
@@ -650,7 +645,7 @@ if st.session_state.is_mobile:
     
     st.markdown(f"""
         <div class="mobile-toolbar">
-            <div class="tool-btn" data-action-stop="action=open_menu">
+            <div class="tool-btn" data-action="action=open_menu">
                 <span style="font-size:16px;">☰</span>
                 <span>MENU</span>
             </div>
