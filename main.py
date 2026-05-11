@@ -588,13 +588,8 @@ def local_css():
         .mobile-sidebar-content { display: none !important; }
         .mobile-nav-dropdown { display: flex; }
         
-        /* Basic hiding */
-        .desktop-only { display: none !important; }
-        
         .block-container { padding-top: 0.5rem !important; }
         header[data-testid="stHeader"] { display: none !important; }
-        
-        .mobile-grid-container { display: block !important; }
     }
 
     /* Mobile Responsive */
@@ -976,22 +971,7 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # Duplicate buttons and Header - Hidden on Mobile
-        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
-        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
-        with col_hdr1:
-            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
-        with col_hdr_v:
-            v_col1, v_col2 = st.columns(2)
-            if v_col1.button("📱 DZIEŃ", key="v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "dzień"; st.rerun()
-            if v_col2.button("📅 TYDZIEŃ", key="v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "tydzień"; st.rerun()
-        with col_hdr2:
-            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="v_edit_btn", on_click=toggle_edit, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # 3. Kalendarz zapisów - Visible on mobile
+        # 3. Kalendarz zapisów - Render first on Mobile
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             all_days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
@@ -1003,7 +983,7 @@ with col_main:
                 show_days_indices = list(range(6))
                 cols_css = "grid-template-columns: 60px repeat(6, 1fr);"
             
-            full_html = f'<div class="calendar-wrapper {edit_cls} mobile-grid-container">'
+            full_html = f'<div class="calendar-wrapper {edit_cls}">'
             full_html += f'<div class="calendar-grid-header" style="{cols_css}"><div class="day-header"></div>'
             
             # Calculate dates for the selected week
@@ -1046,6 +1026,19 @@ with col_main:
             st.markdown(full_html, unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
+
+        # Buttons AFTER the grid
+        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
+        with col_hdr1:
+            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+        with col_hdr_v:
+            v_col1, v_col2 = st.columns(2)
+            if v_col1.button("📱 DZIEŃ", key="v_day_btn_v2", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "dzień"; st.rerun()
+            if v_col2.button("📅 TYDZIEŃ", key="v_week_btn_v2", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "tydzień"; st.rerun()
+        with col_hdr2:
+            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="v_edit_btn_v2", on_click=toggle_edit, use_container_width=True)
 
     elif st.session_state.page == "add_data":
         EXERCISES_DATA = {
