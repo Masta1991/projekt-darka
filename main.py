@@ -627,12 +627,21 @@ def render_sidebar_tiles():
 
 # Standard Layout Logic
 if st.session_state.is_mobile and st.session_state.show_mobile_menu:
-    st.markdown('<div style="padding:20px;">', unsafe_allow_html=True)
-    if st.button("❌ ZAMKNIJ MENU", use_container_width=True):
-        st.session_state.show_mobile_menu = False
-        st.rerun()
+    # MOBILE MENU OVERLAY
+    st.markdown("""
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:10000; padding:20px; backdrop-filter:blur(10px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <h2 style="margin:0; color:#31d5f2; letter-spacing:2px;">MENU</h2>
+                <div data-action="action=close_menu" style="background:#ff453a; color:white; padding:10px 15px; border-radius:12px; font-weight:800; cursor:pointer;">ZAMKNIJ ✕</div>
+            </div>
+    """, unsafe_allow_html=True)
     render_sidebar_tiles()
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Handle Close Action from Menu
+    if 'action=close_menu' in st.session_state.get('last_js_data_action', ''):
+        st.session_state.show_mobile_menu = False
+        st.session_state.last_js_data_action = ""; st.rerun()
     st.stop()
 
 if st.session_state.is_mobile:
@@ -645,19 +654,19 @@ if st.session_state.is_mobile:
     
     st.markdown(f"""
         <div class="mobile-toolbar">
-            <div class="tool-btn" data-action="action=open_menu">
+            <div class="tool-btn" data-action="action=toggle_menu">
                 <span style="font-size:16px;">☰</span>
                 <span>MENU</span>
             </div>
-            <div class="tool-btn {'active' if st.session_state.calendar_view == 'dzień' else ''}" data-action="action=nav&view=dzień">
+            <div class="tool-btn {'active' if st.session_state.calendar_view == 'dzień' else ''}" data-action="action=set_view&v=dzień">
                 <span style="font-size:16px;">📱</span>
                 <span>DZIEŃ</span>
             </div>
-            <div class="tool-btn {'active' if st.session_state.calendar_view == 'tydzień' else ''}" data-action="action=nav&view=tydzień">
+            <div class="tool-btn {'active' if st.session_state.calendar_view == 'tydzień' else ''}" data-action="action=set_view&v=tydzień">
                 <span style="font-size:16px;">📅</span>
                 <span>TYDZIEŃ</span>
             </div>
-            <div class="tool-btn {edit_mode_class}" data-action="action=nav&toggle_edit=true">
+            <div class="tool-btn {edit_mode_class}" data-action="action=set_edit">
                 <span style="font-size:16px;">{'✅' if st.session_state.edit_mode else '⚙️'}</span>
                 <span>{edit_mode_label.split(' ')[1]}</span>
             </div>
@@ -666,16 +675,15 @@ if st.session_state.is_mobile:
     
     # Handle mobile actions
     js_action = st.session_state.get('last_js_data_action', '')
-    if 'action=open_menu' in js_action:
-        st.session_state.show_mobile_menu = True
+    if 'action=toggle_menu' in js_action:
+        st.session_state.show_mobile_menu = not st.session_state.show_mobile_menu
         st.session_state.last_js_data_action = ""; st.rerun()
-    elif 'view=dzień' in js_action:
-        st.session_state.calendar_view = 'dzień'
+    elif 'action=set_view' in js_action:
+        # Extract view value from action string e.g. action=set_view&v=dzień
+        new_view = "dzień" if "v=dzień" in js_action else "tydzień"
+        st.session_state.calendar_view = new_view
         st.session_state.last_js_data_action = ""; st.rerun()
-    elif 'view=tydzień' in js_action:
-        st.session_state.calendar_view = 'tydzień'
-        st.session_state.last_js_data_action = ""; st.rerun()
-    elif 'toggle_edit=true' in js_action:
+    elif 'action=set_edit' in js_action:
         st.session_state.edit_mode = not st.session_state.edit_mode
         st.session_state.last_js_data_action = ""; st.rerun()
         
