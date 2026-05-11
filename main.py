@@ -377,12 +377,12 @@ def check_password():
         return True
 
     # Check localStorage for valid session via Bridge (Safe for Cloud)
-    components.html("""
+    st.components.v1.html(f"""
     <script>
     const authTs = window.localStorage.getItem('trainer_auth_ts');
-    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {{
         window.parent.defaultView.sendActionToStreamlit('action=auto_login');
-    }
+    }}
     </script>
     """, height=0)
 
@@ -704,24 +704,24 @@ with col_main:
                 
                 pill_html = ""
                 if is_sel:
-                    pill_html = f"""
-                    <div class="pill-container" data-action-stop="true">
-                        <div class="pill-btn" onclick="sendActionToStreamlit('action=update_weight&ex={ex}&delta=2.5')">+</div>
-                        <div class="pill-display">
-                            <div class="pill-val">{weight}</div>
-                            <div class="pill-unit">kg</div>
-                        </div>
-                        <div class="pill-btn" onclick="sendActionToStreamlit('action=update_weight&ex={ex}&delta=-2.5')">−</div>
-                    </div>
-                    """
+                    pill_html = (
+                        f'<div class="pill-container" data-action-stop="true">'
+                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=2.5\')">+</div>'
+                        f'<div class="pill-display">'
+                        f'<div class="pill-val">{weight}</div>'
+                        f'<div class="pill-unit">kg</div>'
+                        f'</div>'
+                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=-2.5\')">−</div>'
+                        f'</div>'
+                    )
                 
-                html = f"""
-                <div class="exercise-row {sel_class}" data-action="action=toggle_exercise&ex={ex}">
-                    <div class="exercise-indicator"></div>
-                    <div class="exercise-name">{ex}</div>
-                    {pill_html}
-                </div>
-                """
+                html = (
+                    f'<div class="exercise-row {sel_class}" data-action="action=toggle_exercise&ex={ex}">'
+                    f'<div class="exercise-indicator"></div>'
+                    f'<div class="exercise-name">{ex}</div>'
+                    f'{pill_html}'
+                    f'</div>'
+                )
                 st.markdown(html, unsafe_allow_html=True)
 
         with c1:
