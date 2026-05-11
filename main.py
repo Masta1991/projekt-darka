@@ -587,21 +587,8 @@ def local_css():
         .mobile-header { display: flex; margin-bottom: 5px !important; }
         .mobile-sidebar-content { display: none !important; }
         .mobile-nav-dropdown { display: flex; }
-        .desktop-only { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+        .desktop-only { display: none !important; }
         .tile-link.desktop-only { display: none !important; }
-        
-        /* Target ONLY the specific block containing desktop-only, not the whole column */
-        div[data-testid="stVerticalBlock"] > div:has(.desktop-only),
-        div[data-testid="stVerticalBlock"] > div:has(.mobile-sidebar-content) {
-            display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
-        }
-
-        /* Hide the specific duplicate buttons by their keys */
-        div[data-testid="stButton"]:has(button[key*="v_day_btn"]),
-        div[data-testid="stButton"]:has(button[key*="v_week_btn"]),
-        div[data-testid="stButton"]:has(button[key*="v_edit_btn"]) {
-            display: none !important;
-        }
         
         .block-container { padding-top: 0.5rem !important; }
         header[data-testid="stHeader"] { display: none !important; }
@@ -659,10 +646,49 @@ s.innerHTML = `
         background-color: rgba(49, 213, 242, 0.1) !important;
         color: #31d5f2 !important;
     }}
+
+    /* Surgical Mobile Cleanup */
+    @media (max-width: 1000px) {{
+        /* Target Streamlit columns containing desktop-only markers */
+        [data-testid="column"]:has(.desktop-only),
+        [data-testid="stVerticalBlock"] > div:has(.desktop-only) {{
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
+    }}
 `;
 doc.head.appendChild(s);
 
-// 2. Theme Observer (Not used for calendar anymore)
+// 2. Mobile Surgical Observer
+const observer = new MutationObserver(() => {{
+    if (window.innerWidth <= 1000) {{
+        const desktopElements = doc.querySelectorAll('.desktop-only');
+        desktopElements.forEach(el => {{
+            const block = el.closest('div[data-testid="stVerticalBlock"] > div');
+            if (block) {{
+                block.style.display = 'none';
+                block.style.height = '0';
+                block.style.margin = '0';
+                block.style.padding = '0';
+            }}
+        }});
+        
+        // Hide duplicate buttons outside header
+        const allButtons = doc.querySelectorAll('button');
+        allButtons.forEach(btn => {{
+            const txt = btn.innerText || "";
+            if (txt.includes('DZIEŃ') || txt.includes('TYDZIEŃ') || txt.includes('EDYTUJ')) {{
+                if (!btn.closest('.mobile-header')) {{
+                    const block = btn.closest('div[data-testid="stVerticalBlock"] > div');
+                    if (block) block.style.display = 'none';
+                }}
+            }}
+        }});
+    }}
+}});
+observer.observe(doc.body, {{ childList: true, subtree: true }});
 
 // 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
