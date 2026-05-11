@@ -106,13 +106,6 @@ if (!parentDoc.getElementById('injected-global-script')) {
                 }
             });
         }
-        document.body.addEventListener('click', (e) => {
-            const actionEl = e.target.closest('[data-action]');
-            if (actionEl) {
-                e.stopPropagation(); e.preventDefault();
-                window.parent.sendActionToStreamlit(actionEl.getAttribute('data-action'));
-            }
-        });
     `;
     parentDoc.body.appendChild(s);
 }
