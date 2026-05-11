@@ -589,8 +589,13 @@ def local_css():
         .mobile-nav-dropdown { display: flex; }
         .desktop-only { display: none !important; }
         .calendar-main-view { display: none !important; }
-        /* Extra safety: ensure bento tiles are hidden even if they have other classes */
         .tile-link.desktop-only { display: none !important; }
+        
+        /* Force hide any Streamlit block containing desktop-only class */
+        div[data-testid="column"]:has(.desktop-only), 
+        div[data-testid="stVerticalBlock"] > div:has(.desktop-only) {
+            display: none !important;
+        }
     }
 
     /* Mobile Responsive */
@@ -973,8 +978,8 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # Always visible on mobile home now, but we wrap in a class for potential styling
-        st.markdown('<div class="calendar-main-view">', unsafe_allow_html=True)
+        # Wrap everything in desktop-only to trigger the mobile hiding rule
+        st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
@@ -1039,7 +1044,7 @@ with col_main:
                 full_html += '</div>'
             full_html += '</div>'
             st.markdown(full_html, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True) # Close calendar-main-view
+            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
 
