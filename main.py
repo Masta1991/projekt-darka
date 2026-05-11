@@ -230,6 +230,16 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .block-container { padding: 1rem !important; }
+        .tile-title { font-size: 16px !important; }
+        .tile-desc { font-size: 11px !important; }
+        .page-title { font-size: 24px !important; }
+        .calendar-cell { min-width: 100px; }
+        /* Hide some desktop elements if needed */
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -286,6 +296,8 @@ if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'selected_date' not in st.session_state: st.session_state.selected_date = datetime.date.today()
 if 'mini_cal_date' not in st.session_state: st.session_state.mini_cal_date = datetime.date.today().replace(day=1)
 if 'selected_week' not in st.session_state: st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
+if 'calendar_view' not in st.session_state: 
+    st.session_state.calendar_view = "tydzień" if not st.session_state.get('is_mobile') else "dzień"
 
 if st.query_params.get("edit_mode") == "1":
     st.session_state.edit_mode = True
@@ -299,6 +311,12 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
     try:
         parts = dict(p.split('=') for p in js_data.split('&'))
+        
+        # Capture screen width
+        if 'w' in parts:
+            st.session_state.screen_width = int(parts['w'])
+            st.session_state.is_mobile = st.session_state.screen_width < 768
+
         action = parts.get('action')
         if action == "nav":
             st.session_state.page = parts.get("page", "home")
@@ -382,20 +400,42 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        col_hdr1, col_hdr2 = st.columns([4, 1])
+        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+        with col_hdr_v:
+            v_col1, v_col2 = st.columns(2)
+            if v_col1.button("📱 DZIEŃ", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "dzień"; st.rerun()
+            if v_col2.button("📅 TYDZIEŃ", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "tydzień"; st.rerun()
         with col_hdr2:
-            st.button("✅ KONIEC EDYCJI" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
+            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             full_html = f'<div class="calendar-wrapper {edit_cls}">'
             # Calculate dates for the current week (starting Monday)
             start_of_week = sel_date - datetime.timedelta(days=sel_date.weekday())
-            week_dates = [start_of_week + datetime.timedelta(days=i) for i in range(6)]
+            all_week_dates = [start_of_week + datetime.timedelta(days=i) for i in range(6)]
+            all_days_names = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
             
-            days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
+            # Filter based on view
+            if st.session_state.calendar_view == "dzień":
+                # Find current selected day in the week
+                day_idx = sel_date.weekday()
+                if day_idx > 5: day_idx = 0 # Handle Sunday as Monday for display
+                week_dates = [sel_date]
+                days = [all_days_names[day_idx]]
+                grid_template = "50px 1fr"
+            else:
+                week_dates = all_week_dates
+                days = all_days_names
+                grid_template = "50px repeat(6, 1fr)"
+            
+            # Inject dynamic grid template for responsiveness
+            full_html += f'<style>.calendar-grid-header, .calendar-row {{ grid-template-columns: {grid_template} !important; }} @media (max-width: 768px) {{ .calendar-row {{ min-width: {"800px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} .calendar-grid-header {{ min-width: {"800px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} }} </style>'
+            
             full_html += '<div class="calendar-grid-header"><div class="day-header"></div>'
             for i, d_name in enumerate(days): 
                 d_obj = week_dates[i]
@@ -723,11 +763,21 @@ function sendActionToStreamlit(actionStr) {
     if(input) {
         input.focus();
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        nativeInputValueSetter.call(input, actionStr + '&ts=' + Date.now());
+        // Include window width in every action
+        const width = window.innerWidth;
+        nativeInputValueSetter.call(input, actionStr + '&w=' + width + '&ts=' + Date.now());
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         input.blur();
     }
+}
+
+// Initial width report
+if (!window.initialWidthSent) {
+    setTimeout(() => {
+        sendActionToStreamlit('action=init');
+        window.initialWidthSent = true;
+    }, 1000);
 }
 
 if (!parentDoc.getElementById('injected-global-script')) {
