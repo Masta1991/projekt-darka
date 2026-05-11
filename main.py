@@ -15,10 +15,17 @@ st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="w
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- JS Data Exchange Bridge (Must be rendered early for persistent login) ---
-# Hide technical field by moving it outside the screen instead of display:none (which blocks JS events)
-st.markdown("<style>div[data-testid='stTextInput']:has(input[aria-label='js_data_exchange']) { position: fixed; top: -500px; left: -500px; opacity: 0; z-index: -1000; }</style>", unsafe_allow_html=True)
-js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="collapsed")
+# --- Technical Bridge Styles ---
+st.markdown("""
+    <style>
+    #js-bridge-container { display: none !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+with st.container():
+    st.markdown('<div id="js-bridge-container">', unsafe_allow_html=True)
+    js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 js_code = """
 <script>
