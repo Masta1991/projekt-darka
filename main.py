@@ -510,7 +510,7 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             if ex_name in st.session_state.add_data_exercises:
                 del st.session_state.add_data_exercises[ex_name]
             else:
-                st.session_state.add_data_exercises[ex_name] = 20.0
+                st.session_state.add_data_exercises[ex_name] = 0.0
             st.rerun()
         elif action == "update_weight":
             ex_name = parts.get("ex")
@@ -706,12 +706,12 @@ with col_main:
                 if is_sel:
                     pill_html = (
                         f'<div class="pill-container" data-action-stop="true">'
-                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=2.5\')">+</div>'
+                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=1.25\')">+</div>'
                         f'<div class="pill-display">'
-                        f'<div class="pill-val">{weight}</div>'
+                        f'<div class="pill-val">{weight:.2f}</div>'
                         f'<div class="pill-unit">kg</div>'
                         f'</div>'
-                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=-2.5\')">−</div>'
+                        f'<div class="pill-btn" onclick="window.parent.defaultView.sendActionToStreamlit(\'action=update_weight&ex={ex}&delta=-1.25\')">−</div>'
                         f'</div>'
                     )
                 
