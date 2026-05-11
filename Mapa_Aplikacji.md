@@ -21,6 +21,18 @@ Niniejszy dokument definiuje standardowe nazewnictwo elementów interfejsu użyt
 
 ---
 
+## Widok: Grafik (Ekran Główny)
+(Główny pulpit nawigacyjny aplikacji)
+
+| Numer | Nazwa Elementu | Opis / Lokalizacja |
+| :--- | :--- | :--- |
+| **1** | **Kalendarz Główny** | Panel "DOWODZENIE" (mini-kalendarz z wyborem daty). |
+| **2** | **Przyciski górne** | Pasek sterowania widokiem (DZIEŃ, TYDZIEŃ, EDYTUJ). |
+| **3** | **Kalendarz Zapisów** | Główna siatka grafikowa z godzinami i zapisanymi treningami. |
+| **4** | **Menu** | Kafelki Bento w bocznej sekcji (ADMINISTRACJA, ANALITYKA, itd.). |
+
+---
+
 ## Zasady Współpracy
 1. **Precyzja zmian**: Zmieniamy TYLKO ten element, o który prosi użytkownik.
 2. **Autoryzacja zmian pośrednich**: Jeśli wykonanie prośby wymaga modyfikacji innej części kodu (nieobjętej prośbą), AI ma obowiązek zapytać o pozwolenie przed wprowadzeniem tych zmian.
