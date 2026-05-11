@@ -621,7 +621,7 @@ def render_sidebar_tiles():
         """, unsafe_allow_html=True)
 
 # Standard Layout Logic
-if st.session_state.get('is_mobile') and st.session_state.show_mobile_menu:
+if st.session_state.is_mobile and st.session_state.show_mobile_menu:
     st.markdown('<div style="padding:20px;">', unsafe_allow_html=True)
     if st.button("❌ ZAMKNIJ MENU", use_container_width=True):
         st.session_state.show_mobile_menu = False
@@ -631,6 +631,7 @@ if st.session_state.get('is_mobile') and st.session_state.show_mobile_menu:
     st.stop()
 
 if st.session_state.is_mobile:
+    # Double check width just in case of stale state
     st.markdown(f'<div class="mobile-header"><div style="font-weight:900; color:#31d5f2;">TRAINER PRO</div><div class="mobile-menu-btn" data-action-stop="action=open_menu">MENU ☰</div></div>', unsafe_allow_html=True)
     if 'action=open_menu' in st.session_state.get('last_js_data_action', ''):
         st.session_state.show_mobile_menu = True
