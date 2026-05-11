@@ -170,11 +170,92 @@ def local_css():
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
 
+    /* v28 Exercise Button Design (Row Style) */
+    .exercise-row {
+        display: flex;
+        align-items: center;
+        background: #1c1c1e;
+        border-radius: 16px;
+        padding: 0 20px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255,255,255,0.05);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+        height: 80px;
+        box-sizing: border-box;
+    }
+    .exercise-row:hover { border-color: #31d5f2; background: #252528; }
+    .exercise-row.selected { border-color: #31d5f2; background: rgba(49, 213, 242, 0.05); }
+
+    .exercise-indicator {
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2);
+        margin-right: 15px;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    .exercise-row.selected .exercise-indicator {
+        background: #31d5f2;
+        border-color: #31d5f2;
+        box-shadow: 0 0 15px rgba(49,213,242,0.5);
+    }
+
+    .exercise-name {
+        flex-grow: 1;
+        font-size: 15px;
+        font-weight: 700;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Weight Pill Design */
+    .pill-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #0d1117;
+        padding: 5px 12px;
+        border-radius: 100px;
+        border: 1px solid rgba(49, 213, 242, 0.3);
+        height: 54px;
+        margin-left: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .pill-btn {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        border: 2px solid #31d5f2;
+        display: flex; align-items: center; justify-content: center;
+        color: #31d5f2; font-weight: 900; font-size: 22px;
+        cursor: pointer; transition: all 0.2s;
+        user-select: none;
+    }
+    .pill-btn:active { transform: scale(0.85); background: rgba(49, 213, 242, 0.1); }
+    .pill-display {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-width: 50px;
+        height: 50px;
+        background: #1c1c1e;
+        border: 1px solid rgba(49, 213, 242, 0.2);
+        border-radius: 50%;
+    }
+    .pill-val { font-size: 16px; font-weight: 900; color: white; line-height: 1; }
+    .pill-unit { font-size: 8px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
     /* Mobile Responsive */
     @media (max-width: 1000px) {
         .calendar-wrapper { padding: 10px; border-radius: 16px; }
         .calendar-grid-header, .calendar-row { min-width: 800px; }
         .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+        .exercise-row { height: 70px; padding: 0 15px; }
+        .pill-container { height: 44px; gap: 8px; }
+        .pill-btn { width: 28px; height: 28px; font-size: 18px; }
+        .pill-display { width: 40px; height: 40px; }
+        .pill-val { font-size: 13px; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -424,6 +505,21 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             st.session_state.authenticated = True
             st.session_state.login_ts = time.time()
             st.rerun()
+        elif action == "toggle_exercise":
+            ex_name = parts.get("ex")
+            if ex_name in st.session_state.add_data_exercises:
+                del st.session_state.add_data_exercises[ex_name]
+            else:
+                st.session_state.add_data_exercises[ex_name] = 20.0
+            st.rerun()
+        elif action == "update_weight":
+            ex_name = parts.get("ex")
+            delta = float(parts.get("delta", 0))
+            if ex_name in st.session_state.add_data_exercises:
+                st.session_state.add_data_exercises[ex_name] += delta
+                if st.session_state.add_data_exercises[ex_name] < 0:
+                    st.session_state.add_data_exercises[ex_name] = 0.0
+            st.rerun()
         elif action == "delete":
             d_p, h_p = parts.get("d"), int(parts.get("h", -1))
             if (d_p, h_p) in st.session_state.schedule_data: 
@@ -596,22 +692,37 @@ with col_main:
         st.divider()
         c1, c2 = st.columns(2)
         
+        # --- Exercise List Function ---
         def render_exercise_section(part_name, exercises_dict):
             if not part_name or part_name == "NONE": return
             exercises = exercises_dict.get(part_name, [])[:5] 
             for i, ex in enumerate(exercises):
                 is_sel = ex in st.session_state.add_data_exercises
-                st.markdown(f'<div class="ex-btn-marker {"btn-active" if is_sel else "btn-inactive"}"></div>', unsafe_allow_html=True)
-                with st.popover(ex, use_container_width=True):
-                    st.markdown(f"### {ex}")
-                    current_kg = st.session_state.add_data_exercises.get(ex, 20.0)
-                    new_kg = st.number_input("kg", min_value=0.0, max_value=500.0, value=float(current_kg), step=2.5, key=f"kg_{part_name}_{i}")
-                    col_p1, col_p2 = st.columns(2)
-                    if col_p1.button("✅ POTWIERDŹ", key=f"conf_{part_name}_{i}", use_container_width=True, type="primary"):
-                        st.session_state.add_data_exercises[ex] = new_kg; st.rerun()
-                    if col_p2.button("❌ USUŃ", key=f"rem_{part_name}_{i}", use_container_width=True):
-                        if ex in st.session_state.add_data_exercises: del st.session_state.add_data_exercises[ex]
-                        st.rerun()
+                weight = st.session_state.add_data_exercises.get(ex, 20.0)
+                
+                sel_class = "selected" if is_sel else ""
+                
+                pill_html = ""
+                if is_sel:
+                    pill_html = f"""
+                    <div class="pill-container" data-action-stop="true">
+                        <div class="pill-btn" onclick="sendActionToStreamlit('action=update_weight&ex={ex}&delta=2.5')">+</div>
+                        <div class="pill-display">
+                            <div class="pill-val">{weight}</div>
+                            <div class="pill-unit">kg</div>
+                        </div>
+                        <div class="pill-btn" onclick="sendActionToStreamlit('action=update_weight&ex={ex}&delta=-2.5')">−</div>
+                    </div>
+                    """
+                
+                html = f"""
+                <div class="exercise-row {sel_class}" data-action="action=toggle_exercise&ex={ex}">
+                    <div class="exercise-indicator"></div>
+                    <div class="exercise-name">{ex}</div>
+                    {pill_html}
+                </div>
+                """
+                st.markdown(html, unsafe_allow_html=True)
 
         with c1:
             main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI"], index=0)
