@@ -414,16 +414,19 @@ if st.query_params.get("edit_mode") == "1":
 def toggle_edit():
     st.session_state.edit_mode = not st.session_state.edit_mode
 
-# --- Actions via Hidden Input ---
-js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
-# Handled at the top of the file now for persistent login
-if False: # Placeholder to remove old block
-    pass
+# --- Actions via Hidden Input (Navigation, Delete, Move) ---
+# Note: Screen width and auto-login are already handled by the first js_data_exchange input at the top of the file.
+if js_data and js_data != st.session_state.get('last_js_data_action', ''):
+    st.session_state.last_js_data_action = js_data
+    try:
+        parts = dict(p.split('=') for p in js_data.split('&'))
+        action = parts.get('action')
         if action == "nav":
             st.session_state.page = parts.get("page", "home")
             if "client" in parts: st.query_params["client"] = parts["client"]
             if "h" in parts: st.query_params["hour"] = parts["h"]
             if "date" in parts: st.query_params["date"] = parts["date"]
+            st.rerun()
         elif action == "delete":
             date_str, h_p = parts.get("d"), int(parts.get("h", -1))
             if (date_str, h_p) in st.session_state.schedule_data:
@@ -431,6 +434,7 @@ if False: # Placeholder to remove old block
                 # Update Google Sheets
                 event = st.session_state.schedule_data[(date_str, h_p)]
                 st.session_state.dh.update_calendar_event(date_str, h_p, event['name'], event['type'], 'deleted')
+                st.rerun()
         elif action == "move":
             f_date, f_h = parts.get("fd"), int(parts.get("fh", -1))
             t_date, t_h = parts.get("td"), int(parts.get("th", -1))
@@ -438,6 +442,10 @@ if False: # Placeholder to remove old block
                 val = st.session_state.schedule_data.pop((f_date, f_h))
                 st.session_state.schedule_data[(t_date, t_h)] = val
                 # Update Google Sheets (Delete old, Add new)
+                st.session_state.dh.update_calendar_event(f_date, f_h, val['name'], val['type'], 'deleted')
+                st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
+                st.rerun()
+    except: pass
                 st.session_state.dh.update_calendar_event(f_date, f_h, val['name'], val['type'], 'deleted')
                 st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
         elif action == "sync_weight":
