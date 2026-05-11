@@ -84,6 +84,8 @@ class DataHandler:
 if 'dh' not in st.session_state:
     st.session_state.dh = DataHandler()
 
+st.sidebar.caption("Build: 2026-05-11 15:32 - CSS Fix V10")
+
 # --- Consolidated CSS Injection (Premium Dark & v28 Buttons) ---
 def local_css():
     st.markdown("""
