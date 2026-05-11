@@ -253,13 +253,42 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* Date Picker Calendar Fix */
-    div[data-baseweb="calendar"] {
+    /* Date Picker Calendar Fix (Comprehensive Dark Theme) */
+    div[data-baseweb="calendar"],
+    div[data-baseweb="calendar"] header,
+    div[data-baseweb="calendar"] div[role="grid"],
+    div[data-baseweb="calendar"] div[role="presentation"] {
         background-color: #1c1c1e !important;
+        background: #1c1c1e !important;
         color: white !important;
     }
-    div[data-baseweb="calendar"] button {
+    
+    div[data-baseweb="calendar"] button,
+    div[data-baseweb="calendar"] div {
         color: white !important;
+    }
+
+    /* Selected Day and Hover States */
+    div[data-baseweb="calendar"] div[aria-selected="true"] > div,
+    div[data-baseweb="calendar"] div[aria-selected="true"] {
+        background-color: #31d5f2 !important;
+        color: #000000 !important;
+        border-radius: 50% !important;
+    }
+
+    div[data-baseweb="calendar"] div[role="gridcell"]:hover {
+        background-color: rgba(49, 213, 242, 0.1) !important;
+        border-radius: 50% !important;
+    }
+
+    /* Fix for white/bright areas in header and footer */
+    div[data-baseweb="calendar"] div[role="gridcell"] div {
+        background-color: transparent !important;
+    }
+    
+    /* Next/Prev Month Icons */
+    div[data-baseweb="calendar"] svg {
+        fill: #31d5f2 !important;
     }
 
     /* Menu button styles (global) */
