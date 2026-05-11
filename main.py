@@ -984,10 +984,15 @@ with col_main:
         f_col1, f_col2, f_col3 = st.columns([1, 1, 1])
         with f_col1:
             if st.button("POWRÓT", use_container_width=True):
-                st.session_state.add_data_exercises = {}; st.session_state.page = "home"; st.rerun()
+                st.session_state.add_data_exercises = {}
+                st.session_state.last_workout_load_key = None
+                st.session_state.page = "home"
+                st.rerun()
         with f_col2:
             if st.button("WYCZYŚĆ", use_container_width=True):
-                st.session_state.add_data_exercises = {}; st.rerun()
+                st.session_state.add_data_exercises = {}
+                st.session_state.last_workout_load_key = None
+                st.rerun()
         with f_col3:
             if st.button("ZAPISZ TRENING", type="primary", use_container_width=True):
                 d_s = train_date.strftime("%Y-%m-%d")
@@ -1000,7 +1005,10 @@ with col_main:
                     # Update local state and show success
                     st.session_state.schedule_data[(d_s, train_hour)] = {'name': klient, 'type': main_p.capitalize(), 'status': 'active'}
                     st.success("Zapisano trening!"); time.sleep(1)
-                    st.session_state.add_data_exercises = {}; st.session_state.page = "home"; st.rerun()
+                    st.session_state.add_data_exercises = {}
+                    st.session_state.last_workout_load_key = None
+                    st.session_state.page = "home"
+                    st.rerun()
 
     elif st.session_state.page == "settings":
         st.subheader("⚙️ Konfiguracja")
