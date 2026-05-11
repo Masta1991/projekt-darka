@@ -17,6 +17,100 @@ if "authenticated" not in st.session_state:
 
 # --- JS Data Exchange Bridge (Must be rendered early for persistent login) ---
 js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="hidden")
+
+js_code = """
+<script>
+const parentDoc = window.parent.document;
+
+function sendActionToStreamlit(actionStr) {
+    const input = parentDoc.querySelector('input[aria-label="js_data_exchange"]');
+    if(input) {
+        input.focus();
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        const width = window.innerWidth;
+        nativeInputValueSetter.call(input, actionStr + '&w=' + width + '&ts=' + Date.now());
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.blur();
+    }
+}
+
+if (!window.initialReportSent) {
+    setTimeout(() => {
+        const authTs = localStorage.getItem('trainer_auth_ts');
+        const now = Date.now();
+        let action = 'action=init';
+        if (authTs && (now - parseInt(authTs)) < 14400000) {
+            action = 'action=auto_login';
+        }
+        sendActionToStreamlit(action);
+        window.initialReportSent = true;
+    }, 500);
+}
+
+if (!parentDoc.getElementById('injected-global-script')) {
+    const s = parentDoc.createElement('script');
+    s.id = 'injected-global-script';
+    s.innerHTML = `
+        if (!document.head.querySelector('#dd-touch')) {
+            const touchScript = document.createElement('script');
+            touchScript.id = 'dd-touch';
+            touchScript.src = 'https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js';
+            document.head.appendChild(touchScript);
+        }
+        if (!document.body.hasAttribute('data-drag-bound')) {
+            document.body.setAttribute('data-drag-bound', 'true');
+            document.body.addEventListener('click', (e) => {
+                const stopEl = e.target.closest('[data-action-stop]');
+                if (stopEl) {
+                    e.stopPropagation(); e.preventDefault();
+                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
+                    return;
+                }
+                const actionEl = e.target.closest('[data-action]');
+                if (actionEl) {
+                    e.preventDefault();
+                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                }
+            });
+            document.body.addEventListener('dragstart', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) { e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id')); el.style.opacity = '0.4'; }
+            });
+            document.body.addEventListener('dragend', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) el.style.opacity = '1';
+            });
+            document.body.addEventListener('dragover', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
+            });
+            document.body.addEventListener('dragleave', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) el.style.background = '';
+            });
+            document.body.addEventListener('drop', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) {
+                    e.preventDefault(); el.style.background = '';
+                    const data = e.dataTransfer.getData('text/plain');
+                    if(data) {
+                        const parts = data.split(',');
+                        if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
+                            window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+                        }
+                    }
+                }
+            });
+        }
+    `;
+    parentDoc.body.appendChild(s);
+}
+parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
+</script>
+"""
+components.html(js_code, height=0, width=0)
+
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
     try:
@@ -857,113 +951,4 @@ with col_main:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-js_code = """
-<script>
-const parentDoc = window.parent.document;
-
-function sendActionToStreamlit(actionStr) {
-    const input = parentDoc.querySelector('input[aria-label="js_data_exchange"]');
-    if(input) {
-        input.focus();
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        // Include window width in every action
-        const width = window.innerWidth;
-        nativeInputValueSetter.call(input, actionStr + '&w=' + width + '&ts=' + Date.now());
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        input.blur();
-    }
-}
-
-// Initial width and session report
-if (!window.initialReportSent) {
-    setTimeout(() => {
-        const authTs = localStorage.getItem('trainer_auth_ts');
-        const now = Date.now();
-        let action = 'action=init';
-        
-        // If auth is less than 4 hours old (4 * 60 * 60 * 1000 ms)
-        if (authTs && (now - parseInt(authTs)) < 14400000) {
-            action = 'action=auto_login';
-        }
-        
-        sendActionToStreamlit(action);
-        window.initialReportSent = true;
-    }, 500);
-}
-
-if (!parentDoc.getElementById('injected-global-script')) {
-    const s = parentDoc.createElement('script');
-    s.id = 'injected-global-script';
-    s.innerHTML = `
-        if (!document.head.querySelector('#dd-touch')) {
-            const touchScript = document.createElement('script');
-            touchScript.id = 'dd-touch';
-            touchScript.src = 'https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js';
-            document.head.appendChild(touchScript);
-        }
-
-        if (!document.body.hasAttribute('data-drag-bound')) {
-            document.body.setAttribute('data-drag-bound', 'true');
-            
-            document.body.addEventListener('click', (e) => {
-                const stopEl = e.target.closest('[data-action-stop]');
-                if (stopEl) {
-                    e.stopPropagation(); e.preventDefault();
-                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
-                    return;
-                }
-                const actionEl = e.target.closest('[data-action]');
-                if (actionEl) {
-                    e.preventDefault();
-                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
-                }
-            });
-            
-            document.body.addEventListener('dragstart', (e) => {
-                if (e.target.closest('[data-action-stop]')) {
-                    e.preventDefault();
-                    return;
-                }
-                const el = e.target.closest('[data-drag-id]');
-                if (el) {
-                    e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id'));
-                    el.style.opacity = '0.4';
-                }
-            });
-            document.body.addEventListener('dragend', (e) => {
-                const el = e.target.closest('[data-drag-id]');
-                if (el) el.style.opacity = '1';
-            });
-            document.body.addEventListener('dragover', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
-            });
-            document.body.addEventListener('dragleave', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) el.style.background = '';
-            });
-            document.body.addEventListener('drop', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) {
-                    e.preventDefault();
-                    el.style.background = '';
-                    const data = e.dataTransfer.getData('text/plain');
-                    if(data) {
-                        const parts = data.split(',');
-                        if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
-                            window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
-                        }
-                    }
-                }
-            });
-        }
-    `;
-    parentDoc.body.appendChild(s);
-}
-
-// Make sendActionToStreamlit available in parent scope
-parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
-</script>
-"""
-components.html(js_code, height=0, width=0)
+# JS Code moved to the top of the file
