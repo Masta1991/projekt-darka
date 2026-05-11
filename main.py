@@ -592,6 +592,7 @@ if 'show_mobile_menu' not in st.session_state:
     st.session_state.show_mobile_menu = False
 
 sel_date = st.session_state.get('selected_date', datetime.date.today())
+day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == sel_date.weekday() and v['status'] == 'active']
 
 def render_sidebar_tiles():
     st.markdown('<div class="part-label">MENU</div>', unsafe_allow_html=True)
