@@ -323,62 +323,6 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* --- ATOMOWY FIX DLA KALENDARZA "Data Treningu" --- */
-    /* 1. Główne tło - czyścimy wszystko dookoła */
-    [data-baseweb="popover"], 
-    [data-baseweb="calendar"], 
-    [role="grid"] {
-        background-color: #0d1117 !important;
-        border-radius: 20px !important;
-        border: none !important;
-    }
-
-    /* 2. LIKWIDACJA BIAŁYCH BLOKÓW (Selektor agresywny) */
-    [data-baseweb="calendar"] * {
-        background-color: transparent !important;
-    }
-
-    /* 3. Ukrywamy całkowicie puste/nieaktywne dni */
-    [data-baseweb="calendar"] [aria-disabled="true"] {
-        visibility: hidden !important;
-        pointer-events: none !important;
-    }
-
-    /* 4. STYLIZACJA WYBRANEGO DNIA (Błękitny Glow) */
-    [data-baseweb="calendar"] [aria-selected="true"],
-    [data-baseweb="calendar"] [aria-selected="true"] button,
-    [data-baseweb="calendar"] [aria-selected="true"] > div {
-        background-color: #31d5f2 !important;
-        background: #31d5f2 !important;
-        color: #0d1117 !important;
-        border-radius: 50% !important;
-        box-shadow: 0 0 15px rgba(49, 213, 242, 0.8) !important;
-    }
-
-    /* 5. Nagłówek i nawigacja (Miesiąc, Rok, Strzałki) */
-    [data-baseweb="calendar"] header, 
-    [data-baseweb="calendar"] header * {
-        color: white !important;
-        background-color: transparent !important;
-    }
-
-    [data-baseweb="calendar"] svg {
-        fill: #31d5f2 !important;
-    }
-
-    /* Nazwy dni (Su, Mo, Tu...) */
-    [data-baseweb="calendar"] [role="gridcell"] {
-        color: #8b949e !important;
-        font-size: 0.8rem !important;
-        background-color: transparent !important;
-    }
-
-    /* 6. Fix dla pola wprowadzania (Input) */
-    div[data-baseweb="input"] {
-        background-color: #1c1c1e !important;
-        border-radius: 10px !important;
-    }
-
     /* --- STYLIZACJA LIST ROZWIJALNYCH (Standard z Mapy) --- */
     /* Dotyczy: Lista Podopieczny, Godzina Treningu, Lista Główna Partia, Lista Partia Uzupełniająca */
     [role="option"] {
@@ -509,87 +453,11 @@ if (existing) existing.remove();
 const s = doc.createElement('style');
 s.id = styleId;
 s.innerHTML = `
-    /* ATOMOWY FIX - PORTAL SYNC */
-    [data-baseweb="popover"], [data-baseweb="calendar"], [role="grid"] {{
-        background-color: #0d1117 !important;
-        border-radius: 20px !important;
-        border: none !important;
-    }}
-    [data-baseweb="calendar"] * {{
-        background-color: transparent !important;
-    }}
-    [data-baseweb="calendar"] [aria-disabled="true"] {{
-        visibility: hidden !important;
-    }}
-    [data-baseweb="calendar"] [aria-selected="true"],
-    [data-baseweb="calendar"] [aria-selected="true"] * {{
-        background-color: #31d5f2 !important;
-        color: #0d1117 !important;
-        border-radius: 50% !important;
-        box-shadow: 0 0 15px rgba(49, 213, 242, 0.8) !important;
-    }}
-    div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
-    div[data-baseweb="calendar"] header, div[data-baseweb="calendar"] header * {{ 
-        color: white !important; 
-        background: transparent !important;
-    }}
+    /* ATOMOWY FIX - PORTAL SYNC REMOVED */
 `;
 doc.head.appendChild(s);
 
-// 2. Calendar Style Enforcer (surgical - avoids infinite loops)
-if (window.parent.trainerInterval) clearInterval(window.parent.trainerInterval);
-window.parent.trainerInterval = setInterval(() => {{
-    const calendar = doc.querySelector('[data-baseweb="calendar"]');
-    if (!calendar) return;
-
-    // 1. Force background on popover containers
-    doc.querySelectorAll('[data-baseweb="popover"]').forEach(p => {{
-        p.style.setProperty('background-color', '#0d1117', 'important');
-        p.style.setProperty('border-radius', '20px', 'important');
-    }});
-
-    // 2. Fix all grid cells - make them match the calendar background by default
-    calendar.querySelectorAll('[role="gridcell"]').forEach(cell => {{
-        const isSelected = cell.getAttribute('aria-selected') === 'true';
-        const isDisabled = cell.getAttribute('aria-disabled') === 'true';
-        const innerDiv = cell.querySelector('div');
-        const button = cell.querySelector('button');
-
-        // Force the dark background on everything first
-        cell.style.setProperty('background-color', '#0d1117', 'important');
-        if (innerDiv) innerDiv.style.setProperty('background-color', '#0d1117', 'important');
-        if (button) button.style.setProperty('background-color', '#0d1117', 'important');
-
-        if (isSelected) {{
-            // Force blue solid circle
-            if (innerDiv) {{
-                innerDiv.style.setProperty('background-color', '#31d5f2', 'important');
-                innerDiv.style.setProperty('border-radius', '50%', 'important');
-                innerDiv.style.setProperty('color', '#0d1117', 'important');
-            }}
-            if (button) {{
-                button.style.setProperty('background-color', '#31d5f2', 'important');
-                button.style.setProperty('color', '#0d1117', 'important');
-                button.style.setProperty('border-radius', '50%', 'important');
-            }}
-        }} else if (isDisabled) {{
-            // Make other month days visible but dimmed
-            cell.style.setProperty('visibility', 'visible', 'important');
-            cell.style.setProperty('opacity', '0.3', 'important');
-            if (button) button.style.setProperty('color', '#8b949e', 'important');
-        }} else {{
-            // Normal days
-            if (button) button.style.setProperty('color', 'white', 'important');
-        }}
-    }});
-
-    // 3. Fix headers and arrows
-    calendar.querySelectorAll('header, header *').forEach(h => {{
-        h.style.setProperty('color', 'white', 'important');
-        h.style.setProperty('background-color', '#0d1117', 'important');
-    }});
-    calendar.querySelectorAll('svg').forEach(s => s.style.setProperty('fill', '#31d5f2', 'important'));
-}}, 250);
+// 2. Theme Observer (Not used for calendar anymore)
 
 // 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
