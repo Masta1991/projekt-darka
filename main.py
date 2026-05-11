@@ -323,13 +323,17 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* --- STYLIZACJA LIST ROZWIJALNYCH (Standard z Mapy) --- */
-    /* Dotyczy: Lista Podopieczny, Godzina Treningu, Lista Główna Partia, Lista Partia Uzupełniająca */
+    /* --- STYLIZACJA LIST ROZWIJALNYCH (Zgodnie z Mapą: 2, 4, 5, 6) --- */
+    /* Główne tło listy i opcji */
+    [role="listbox"],
+    [data-baseweb="popover"] [role="listbox"],
     [role="option"] {
-        background-color: transparent !important;
-        transition: background 0.2s !important;
+        background-color: #1c1c1e !important;
+        background: #1c1c1e !important;
+        color: white !important;
     }
-    
+
+    /* Wybrana opcja i efekt najechania (Subtelny Błękit) */
     [role="option"]:hover, 
     [role="option"][aria-selected="true"],
     [role="listbox"] [aria-selected="true"] {
@@ -337,6 +341,7 @@ def local_css():
         color: #31d5f2 !important;
     }
 
+    /* Usunięcie wewnętrznych ramek i przezroczystość dzieci opcji */
     [role="option"] * {
         background-color: transparent !important;
         background: transparent !important;
