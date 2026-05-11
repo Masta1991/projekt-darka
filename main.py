@@ -190,11 +190,13 @@ def local_css():
     /* Selectbox, Date Input, and Text Input Styling */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"] {
+    div[data-baseweb="base-input"],
+    input {
         background-color: #1c1c1e !important;
-        color: white !important;
+        color: #ffffff !important;
         border-radius: 12px !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
+        -webkit-text-fill-color: #ffffff !important;
     }
     
     div[data-baseweb="select"]:hover, 
@@ -202,13 +204,14 @@ def local_css():
         border-color: #31d5f2 !important;
     }
 
-    /* Widget Labels */
+    /* Widget Labels - Force High Visibility White */
     div[data-testid="stWidgetLabel"] p {
-        color: #8b949e !important;
-        font-weight: 600 !important;
-        font-size: 0.85rem !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        opacity: 1 !important;
     }
 
     /* Dropdown Menu Styling */
@@ -217,7 +220,7 @@ def local_css():
         border: 1px solid rgba(49, 213, 242, 0.3) !important;
     }
     li[data-baseweb="option"] {
-        color: white !important;
+        color: #ffffff !important;
         transition: background 0.2s;
     }
     li[data-baseweb="option"]:hover {
