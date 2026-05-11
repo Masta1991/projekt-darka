@@ -823,13 +823,13 @@ with col_main:
         st.divider()
         f_col1, f_col2, f_col3 = st.columns([1, 1, 1])
         with f_col1:
-            if st.button("⬅️ POWRÓT", use_container_width=True):
+            if st.button("POWRÓT", use_container_width=True):
                 st.session_state.add_data_exercises = {}; st.session_state.page = "home"; st.rerun()
         with f_col2:
-            if st.button("🗑️ WYCZYŚĆ", use_container_width=True):
+            if st.button("WYCZYŚĆ", use_container_width=True):
                 st.session_state.add_data_exercises = {}; st.rerun()
         with f_col3:
-            if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
+            if st.button("ZAPISZ TRENING", type="primary", use_container_width=True):
                 if st.session_state.add_data_exercises:
                     d_s = train_date.strftime("%Y-%m-%d")
                     if st.session_state.dh.update_calendar_event(d_s, train_hour, klient, main_p.capitalize()):
