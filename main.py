@@ -178,7 +178,7 @@ def local_css():
         border: 1px solid rgba(255,255,255,0.05); 
         padding: 20px; 
         overflow: auto; 
-        max-height: 75vh;
+        max-height: 90vh;
         position: relative;
     }
     .calendar-grid-header { 
