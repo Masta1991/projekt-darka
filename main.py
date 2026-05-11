@@ -587,14 +587,14 @@ def local_css():
         .mobile-header { display: flex; margin-bottom: 5px !important; }
         .mobile-sidebar-content { display: none !important; }
         .mobile-nav-dropdown { display: flex; }
+        
+        /* Basic hiding */
         .desktop-only { display: none !important; }
-        .tile-link.desktop-only { display: none !important; }
         
         .block-container { padding-top: 0.5rem !important; }
         header[data-testid="stHeader"] { display: none !important; }
         
-        /* Ensure grid is visible */
-        .mobile-grid-container { display: block !important; width: 100% !important; }
+        .mobile-grid-container { display: block !important; }
     }
 
     /* Mobile Responsive */
@@ -645,25 +645,10 @@ s.innerHTML = `
         color: white !important;
     }}
     /* Podświetlenie */
-    [role="option"]:hover, [role="option"][aria-selected="true"] {{
+    [role="option"]:hover, [role="option"][aria-selected="true"] {
         background-color: rgba(49, 213, 242, 0.1) !important;
         color: #31d5f2 !important;
-    }}
-
-    /* Surgical Mobile Cleanup */
-    @media (max-width: 1000px) {{
-        /* Target ONLY the specific blocks, NOT the columns */
-        [data-testid="stVerticalBlock"] > div:has(.desktop-only) {{
-            display: none !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }}
-        /* Hide duplicate buttons by their labels */
-        button:has(p:contains("DZIEŃ")), button:has(p:contains("TYDZIEŃ")), button:has(p:contains("EDYTUJ")) {{
-            display: none !important;
-        }}
-    }}
+    }
 `;
 doc.head.appendChild(s);
 
@@ -991,20 +976,20 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # Duplicate buttons and Header - Wrapped in desktop-only div
-        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+        # Duplicate buttons and Header - Simple Hiding
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
-            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="desktop-only" style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
         with col_hdr_v:
             v_col1, v_col2 = st.columns(2)
+            # We skip rendering buttons on mobile by checking inner width via a trick or just hiding via CSS later
+            # For now, let's just make sure the grid is visible first
             if v_col1.button("📱 DZIEŃ", key="v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "dzień"; st.rerun()
             if v_col2.button("📅 TYDZIEŃ", key="v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "tydzień"; st.rerun()
         with col_hdr2:
             st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="v_edit_btn", on_click=toggle_edit, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
         
         # 3. Kalendarz zapisów - Visible on mobile
         try:
