@@ -16,8 +16,8 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # --- JS Data Exchange Bridge (Must be rendered early for persistent login) ---
-# Hidden from UI but active for data exchange
-st.markdown("<style>div[data-testid='stTextInput']:has(input[aria-label='js_data_exchange']) { display: none !important; }</style>", unsafe_allow_html=True)
+# Hide technical field by moving it outside the screen instead of display:none (which blocks JS events)
+st.markdown("<style>div[data-testid='stTextInput']:has(input[aria-label='js_data_exchange']) { position: fixed; top: -500px; left: -500px; opacity: 0; z-index: -1000; }</style>", unsafe_allow_html=True)
 js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="collapsed")
 
 js_code = """
