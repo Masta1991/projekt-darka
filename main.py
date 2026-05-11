@@ -353,20 +353,24 @@ def local_css():
         font-weight: 700 !important;
     }
 
-    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Nuclear Transparency */
-    [role="option"], [role="option"] > div, [role="option"] * {
+    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Czyste podświetlenie */
+    [role="option"] {
         background-color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+        transition: background 0.2s !important;
     }
     
-    /* Tylko delikatne podświetlenie tła samej komórki przy wyborze/hoverze */
     [role="option"]:hover, 
     [role="option"][aria-selected="true"],
     [role="listbox"] [aria-selected="true"] {
         background-color: rgba(49, 213, 242, 0.1) !important;
         color: #31d5f2 !important;
+    }
+
+    /* Usunięcie wszelkich wewnętrznych ramek i tła dzieci */
+    [role="option"] * {
+        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
     }
 
     /* 5. Kolory tekstu i ikon */
