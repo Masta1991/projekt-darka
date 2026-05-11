@@ -826,7 +826,7 @@ with col_main:
                 st.markdown(html, unsafe_allow_html=True)
 
         with c1:
-            main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI"], index=0)
+            main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI", "NONE"], index=0)
             render_exercise_section(main_p, EXERCISES_DATA)
         with c2:
             extra_p = st.selectbox("Partia Uzupełniająca", ["TRICEPS", "BICEPS", "BRZUCH", "CARDIO", "NONE"], index=0)
