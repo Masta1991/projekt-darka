@@ -645,10 +645,10 @@ s.innerHTML = `
         color: white !important;
     }}
     /* Podświetlenie */
-    [role="option"]:hover, [role="option"][aria-selected="true"] {
+    [role="option"]:hover, [role="option"][aria-selected="true"] {{
         background-color: rgba(49, 213, 242, 0.1) !important;
         color: #31d5f2 !important;
-    }
+    }}
 `;
 doc.head.appendChild(s);
 
