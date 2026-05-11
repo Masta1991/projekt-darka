@@ -18,18 +18,24 @@ if "authenticated" not in st.session_state:
 
 def check_password():
     def password_entered():
-        # You can change '1234' to anything you want
         try:
             access_code = st.secrets.get("access_code", "170491")
         except:
             access_code = "170491"
         if st.session_state["password"] == access_code:
             st.session_state.authenticated = True
+            # Signal JS to save this session
+            st.session_state.save_session = True
             del st.session_state["password"]
         else:
             st.error("❌ Błędny kod dostępu")
 
+    # Check for auto-login from JS bridge
     if not st.session_state.authenticated:
+        js_data = st.session_state.get('last_js_data', '')
+        if 'action=auto_login' in js_data:
+            st.session_state.authenticated = True
+            st.rerun()
         st.markdown("""
         <style>
             .block-container { padding-top: 3rem !important; }
@@ -93,6 +99,17 @@ def check_password():
                 if st.session_state.authenticated:
                     st.rerun()
             st.markdown('<p style="color:#444; font-size:11px; text-align:center; margin-top:16px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
+        
+        # Hidden component to handle session saving
+        if st.session_state.get('save_session'):
+            components.html(f"""
+                <script>
+                const now = Date.now();
+                window.parent.localStorage.setItem('trainer_auth_ts', now);
+                window.parent.location.reload();
+                </script>
+            """, height=0)
+            st.session_state.save_session = False
         st.stop()
 
 check_password()
@@ -178,6 +195,7 @@ def local_css():
         border: 1px solid rgba(255,255,255,0.05); 
         padding: 20px; 
         overflow: auto; 
+        height: 780px;
         max-height: 90vh;
         position: relative;
     }
@@ -854,12 +872,21 @@ function sendActionToStreamlit(actionStr) {
     }
 }
 
-// Initial width report
-if (!window.initialWidthSent) {
+// Initial width and session report
+if (!window.initialReportSent) {
     setTimeout(() => {
-        sendActionToStreamlit('action=init');
-        window.initialWidthSent = true;
-    }, 1000);
+        const authTs = localStorage.getItem('trainer_auth_ts');
+        const now = Date.now();
+        let action = 'action=init';
+        
+        // If auth is less than 4 hours old (4 * 60 * 60 * 1000 ms)
+        if (authTs && (now - parseInt(authTs)) < 14400000) {
+            action = 'action=auto_login';
+        }
+        
+        sendActionToStreamlit(action);
+        window.initialReportSent = true;
+    }, 500);
 }
 
 if (!parentDoc.getElementById('injected-global-script')) {
