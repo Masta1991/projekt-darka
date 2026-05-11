@@ -529,10 +529,29 @@ def local_css():
         font-size: 12px;
     }
 
-    /* MOBILE SIDEBAR */
-    .mobile-sidebar-content {
-        display: block;
+    /* MOBILE NAV DROPDOWN */
+    .mobile-nav-dropdown {
+        display: none;
+        background: #1c1c1e;
+        border: 1px solid rgba(49, 213, 242, 0.3);
+        border-radius: 20px;
+        padding: 10px;
+        margin-bottom: 20px;
+        flex-direction: column;
+        gap: 5px;
     }
+    .mobile-nav-item {
+        padding: 15px 20px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .mobile-nav-item:hover { background: rgba(49, 213, 242, 0.1); color: #31d5f2; }
     
     @media (min-width: 1001px) {
         .mobile-sidebar-content { display: block !important; }
@@ -540,7 +559,8 @@ def local_css():
     
     @media (max-width: 1000px) {
         .mobile-header { display: flex; }
-        .mobile-sidebar-content { display: none; }
+        .mobile-sidebar-content { display: none !important; } /* Hide bento tiles on mobile home */
+        .mobile-nav-dropdown { display: flex; }
     }
 
     /* Mobile Responsive */
@@ -852,28 +872,30 @@ st.markdown(f"""
 # Add toggle_menu to action handler
 # (This would be handled in the consolidated actions section if not already there)
 
+# Mobile Navigation Dropdown
+if st.session_state.mobile_menu:
+    st.markdown("""
+        <div class="mobile-nav-dropdown">
+            <a href="?page=home" class="mobile-nav-item" data-action="action=nav&page=home"><span>🏠 START</span> <span>→</span></a>
+            <a href="?page=add_data" class="mobile-nav-item" data-action="action=nav&page=add_data"><span>➕ DODAJ DANE</span> <span>→</span></a>
+            <a href="?page=dashboard" class="mobile-nav-item" data-action="action=nav&page=dashboard"><span>📊 ANALITYKA</span> <span>→</span></a>
+            <a href="?page=clients" class="mobile-nav-item" data-action="action=nav&page=clients"><span>👥 KLIENCI</span> <span>→</span></a>
+            <a href="?page=reports" class="mobile-nav-item" data-action="action=nav&page=reports"><span>📄 RAPORTY</span> <span>→</span></a>
+            <a href="?page=settings" class="mobile-nav-item" data-action="action=nav&page=settings"><span>⚙️ USTAWIENIA</span> <span>→</span></a>
+        </div>
+    """, unsafe_allow_html=True)
+
 # --- LAYOUT ---
 st.markdown('<div class="main-layout">', unsafe_allow_html=True)
 col_side, col_main = st.columns([1, 4])
 
-# On mobile, we only show col_side if mobile_menu is toggled
-show_sidebar = True
-# Note: Since we can't reliably detect screen width on server-side, 
-# we rely on the user toggling it OR show it always for desktop.
-# A better approach: In CSS we hide the sidebar col on mobile, 
-# and show it only when a class is present.
-
 with col_side:
-    # On mobile (<1000px), visibility is controlled by session state toggle.
-    # On desktop, CSS (display: block !important) overrides this.
-    sidebar_style = "display: block !important;" if st.session_state.mobile_menu else ""
-    st.markdown(f'<div class="mobile-sidebar-content" style="{sidebar_style}">', unsafe_allow_html=True)
-    
     sel_date = st.session_state.selected_date
     d_str_today = sel_date.strftime("%Y-%m-%d")
     day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == d_str_today and v['status'] == 'active']
     
     # Square Dowodzenie Panel with Permanent Calendar
+    # This stays VISIBLE on Mobile as the main control center
     c = calendar.Calendar(firstweekday=0)
     month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
     months_pl = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
@@ -891,17 +913,18 @@ with col_side:
             if is_selected: style += " background: #31d5f2; color: #0d1117; font-weight: 800; box-shadow: 0 0 8px rgba(49,213,242,0.5);"
             grid_html += f'<span data-action="action=select_date&y={d_o.year}&m={d_o.month}&d={d_o.day}" style="display:inline-block; {style}">{d_o.day}</span>'
 
-    dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
+    dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: justify; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div style="float:right;"><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
     st.markdown(dowodzenie_html, unsafe_allow_html=True)
 
+    # NOW we hide the Bento Tiles on Mobile
+    st.markdown('<div class="mobile-sidebar-content">', unsafe_allow_html=True)
     bento_tile("ADMINISTRACJA", "Dodaj dane", "Treningi i pomiary", "tile_add_data_1778074195381.png", "add_data")
     bento_tile("ANALITYKA", "Wyniki", "Wykresy postępów", "tile_dashboard_1778074214113.png", "dashboard")
     bento_tile("ZARZĄDZANIE", "Klienci", "Baza podopiecznych", "tile_clients_1778074239507.png", "clients")
     bento_tile("DOKUMENTACJA", "Raporty", "Pliki PDF", "tile_reports_1778074427532.png", "reports")
     bento_tile("NOTATNIK", "Notatki", "Uwagi o klientach", "tile_notes_1778074445132.png", "notes")
     bento_tile("USTAWIENIA", "Konfiguracja", "Ustawienia aplikacji", "tile_settings_1778074463560.png", "settings")
-    
-    st.markdown('</div>', unsafe_allow_html=True) # Close mobile-sidebar-content
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col_main:
     if st.session_state.page == "home":
