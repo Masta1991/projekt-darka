@@ -489,58 +489,65 @@ let existingStyle = parentDoc.getElementById('injected-global-styles');
 if (existingStyle) existingStyle.remove();
 const style = parentDoc.createElement('style');
 style.id = 'injected-global-styles';
-    style.innerHTML = `
-        /* ULTIMATE GLOBAL FIX FOR CALENDAR AND DROPDOWNS */
-        div[data-baseweb="calendar"], 
-        div[data-baseweb="calendar"] *,
-        div[data-baseweb="popover"] div[role="dialog"],
-        div[data-baseweb="popover"] [role="listbox"] {
+        /* BRUTE FORCE WIDGET OVERRIDE */
+        [data-baseweb="popover"] *, 
+        [data-baseweb="calendar"] *,
+        [data-baseweb="menu"] *,
+        [role="listbox"] *,
+        [role="dialog"] * {
             background-color: #1c1c1e !important;
             color: white !important;
-            border-color: rgba(49, 213, 242, 0.3) !important;
+            border-color: rgba(49, 213, 242, 0.2) !important;
         }
 
-        /* Fix the header area (Month/Year) */
-        div[data-baseweb="calendar"] header,
-        div[data-baseweb="calendar"] header *,
-        div[data-baseweb="calendar"] [data-baseweb="select"] * {
-            background-color: #1c1c1e !important;
-            color: white !important;
+        /* Specific fixes for selected items to keep them visible */
+        [aria-selected="true"], 
+        [aria-selected="true"] *,
+        [data-baseweb="option"]:hover,
+        [data-baseweb="option"]:hover * {
+            background-color: #31d5f2 !important;
+            color: black !important;
         }
 
-        /* Fix those white/bright blocks in the grid */
-        div[data-baseweb="calendar"] div[role="gridcell"],
-        div[data-baseweb="calendar"] div[role="gridcell"] * {
+        /* Transparent overrides for inner grid elements to avoid white blocks */
+        [role="gridcell"], [role="gridcell"] * {
             background-color: transparent !important;
         }
-
-        /* Arrows and Icons */
-        div[data-baseweb="calendar"] svg {
-            fill: #31d5f2 !important;
-        }
-
-        /* Selection - BLUE instead of red */
-        div[data-baseweb="calendar"] div[aria-selected="true"],
-        div[data-baseweb="calendar"] div[aria-selected="true"] * {
+        
+        [aria-selected="true"] {
             background-color: #31d5f2 !important;
-            color: #000 !important;
-            border-radius: 50% !important;
         }
 
-        /* Hover effect */
-        div[data-baseweb="calendar"] div[role="gridcell"]:hover {
-            background-color: rgba(49, 213, 242, 0.2) !important;
-            border-radius: 50% !important;
-        }
-
-        /* Weekday labels (Su, Mo...) */
-        div[data-baseweb="calendar"] div[role="grid"] > div:first-child > div {
-            color: #31d5f2 !important;
-            font-weight: 800 !important;
+        /* Month navigation arrows */
+        [data-baseweb="calendar"] svg {
+            fill: #31d5f2 !important;
+            background: transparent !important;
         }
     `;
     parentDoc.head.appendChild(style);
 }
+
+// Relentless Observer to fix dynamic elements
+const observer = new MutationObserver((mutations) => {
+    const popovers = parentDoc.querySelectorAll('[data-baseweb="popover"]');
+    popovers.forEach(popover => {
+        popover.style.backgroundColor = '#1c1c1e';
+        const all = popover.querySelectorAll('*');
+        all.forEach(el => {
+            if (el.getAttribute('aria-selected') === 'true') {
+                el.style.backgroundColor = '#31d5f2';
+                el.style.color = 'black';
+            } else if (el.tagName !== 'SVG' && el.tagName !== 'path') {
+                // Only set background if not selected
+                const style = window.getComputedStyle(el);
+                if (style.backgroundColor !== 'rgb(49, 213, 242)') {
+                     el.style.backgroundColor = '#1c1c1e';
+                }
+            }
+        });
+    });
+});
+observer.observe(parentDoc.body, { childList: true, subtree: true });
 
 if (!parentDoc.getElementById('injected-global-script')) {
     const s = parentDoc.createElement('script');
