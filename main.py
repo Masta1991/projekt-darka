@@ -114,23 +114,24 @@ parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
 """
 components.html(js_code, height=0, width=0)
 
+# --- Process JS Data ---
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
-    parts = dict(p.split('=') for p in js_data.split('&') if '=' in p)
-    
-    if 'w' in parts:
-        new_width = int(parts['w'])
-        if abs(new_width - st.session_state.get('screen_width', 0)) > 50:
-            st.session_state.screen_width = new_width
-            st.session_state.is_mobile = new_width < 768
-    
-    if 'action' in parts:
-        action = parts['action']
-        if action == 'auto_login':
-            st.session_state.authenticated = True
-        elif action != 'init':
-            st.session_state.last_js_data_action = js_data
-            st.rerun()
+    try:
+        parts = dict(p.split('=') for p in js_data.split('&') if '=' in p)
+        if 'w' in parts:
+            new_width = int(parts['w'])
+            if abs(new_width - st.session_state.get('screen_width', 0)) > 20:
+                st.session_state.screen_width = new_width
+                st.session_state.is_mobile = new_width < 768
+        
+        if 'action' in parts:
+            act = parts['action']
+            if act == 'auto_login':
+                st.session_state.authenticated = True
+            elif act != 'init':
+                st.session_state.last_js_data_action = js_data
+    except: pass
 
 def check_password():
     def password_entered():
@@ -694,7 +695,7 @@ if st.session_state.is_mobile:
         </div>
     """, unsafe_allow_html=True)
     
-    # Handle mobile actions (More robust parsing)
+    # Handle mobile actions
     js_action = st.session_state.get('last_js_data_action', '')
     if js_action:
         if 'action=toggle_menu' in js_action:
@@ -707,7 +708,7 @@ if st.session_state.is_mobile:
             st.session_state.edit_mode = not st.session_state.edit_mode
         
         st.session_state.last_js_data_action = ""
-        st.rerun()
+        # Removed st.rerun here to avoid loops - Streamlit handles it via input change
         
     col_main = st.container()
 else:
