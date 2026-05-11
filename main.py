@@ -16,7 +16,9 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # --- JS Data Exchange Bridge (Must be rendered early for persistent login) ---
-js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="hidden")
+# Hidden from UI but active for data exchange
+st.markdown("<style>div[data-testid='stTextInput']:has(input[aria-label='js_data_exchange']) { display: none !important; }</style>", unsafe_allow_html=True)
+js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="collapsed")
 
 js_code = """
 <script>
@@ -392,32 +394,40 @@ def local_css():
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
 
-    /* MOBILE HEADER & MENU */
-    .mobile-header {
+    /* MOBILE CONTROL BAR */
+    .mobile-header-label { font-size: 14px; font-weight: 900; color: #31d5f2; letter-spacing: 2px; margin-bottom: 5px; margin-left: 5px; }
+    .mobile-toolbar {
         display: none;
-        justify-content: space-between;
-        align-items: center;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 8px;
         background: #1c1c1e;
-        padding: 10px 20px;
-        border-radius: 16px;
-        margin-bottom: 15px;
+        padding: 8px;
+        border-radius: 14px;
         border: 1px solid rgba(255,255,255,0.05);
+        margin-bottom: 15px;
     }
-    .mobile-menu-btn {
-        background: rgba(49, 213, 242, 0.1);
-        border: 1px solid #31d5f2;
-        color: #31d5f2;
-        padding: 8px 16px;
+    .tool-btn {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        padding: 8px 4px;
         border-radius: 10px;
-        font-weight: 800;
+        font-size: 10px;
+        font-weight: 700;
+        text-align: center;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
     }
-    
+    .tool-btn.active { background: rgba(49, 213, 242, 0.15); border-color: #31d5f2; color: #31d5f2; }
+    .tool-btn.edit-on { background: rgba(255, 69, 58, 0.15); border-color: #ff453a; color: #ff453a; }
+
     @media (max-width: 900px) {
-        .mobile-header { display: flex; }
-        .calendar-wrapper { padding: 10px; border-radius: 16px; height: auto !important; min-height: 500px; }
-        .calendar-grid-header { top: -10px; }
-        .day-header:first-child, .time-col { left: -10px; }
+        .mobile-toolbar { display: grid; }
+        .desktop-only { display: none !important; }
+        .mobile-header { display: none !important; } /* Hide old header */
     }
 
     /* LANDSCAPE OPTIMIZATION (Mobile Horizontal) */
@@ -631,12 +641,49 @@ if st.session_state.is_mobile and st.session_state.show_mobile_menu:
     st.stop()
 
 if st.session_state.is_mobile:
-    # Double check width just in case of stale state
-    st.markdown(f'<div class="mobile-header"><div style="font-weight:900; color:#31d5f2;">TRAINER PRO</div><div class="mobile-menu-btn" data-action-stop="action=open_menu">MENU ☰</div></div>', unsafe_allow_html=True)
-    if 'action=open_menu' in st.session_state.get('last_js_data_action', ''):
+    # COMPACT MOBILE TOOLBAR
+    st.markdown('<div class="mobile-header-label">TRAINER PRO</div>', unsafe_allow_html=True)
+    
+    # Custom Toolbar with Data Actions
+    edit_mode_label = "✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ"
+    edit_mode_class = "edit-on" if st.session_state.edit_mode else ""
+    
+    st.markdown(f"""
+        <div class="mobile-toolbar">
+            <div class="tool-btn" data-action-stop="action=open_menu">
+                <span style="font-size:16px;">☰</span>
+                <span>MENU</span>
+            </div>
+            <div class="tool-btn {'active' if st.session_state.calendar_view == 'dzień' else ''}" data-action="action=nav&view=dzień">
+                <span style="font-size:16px;">📱</span>
+                <span>DZIEŃ</span>
+            </div>
+            <div class="tool-btn {'active' if st.session_state.calendar_view == 'tydzień' else ''}" data-action="action=nav&view=tydzień">
+                <span style="font-size:16px;">📅</span>
+                <span>TYDZIEŃ</span>
+            </div>
+            <div class="tool-btn {edit_mode_class}" data-action="action=nav&toggle_edit=true">
+                <span style="font-size:16px;">{'✅' if st.session_state.edit_mode else '⚙️'}</span>
+                <span>{edit_mode_label.split(' ')[1]}</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Handle mobile actions
+    js_action = st.session_state.get('last_js_data_action', '')
+    if 'action=open_menu' in js_action:
         st.session_state.show_mobile_menu = True
-        st.session_state.last_js_data_action = ""
-        st.rerun()
+        st.session_state.last_js_data_action = ""; st.rerun()
+    elif 'view=dzień' in js_action:
+        st.session_state.calendar_view = 'dzień'
+        st.session_state.last_js_data_action = ""; st.rerun()
+    elif 'view=tydzień' in js_action:
+        st.session_state.calendar_view = 'tydzień'
+        st.session_state.last_js_data_action = ""; st.rerun()
+    elif 'toggle_edit=true' in js_action:
+        st.session_state.edit_mode = not st.session_state.edit_mode
+        st.session_state.last_js_data_action = ""; st.rerun()
+        
     col_main = st.container()
 else:
     col_side, col_main = st.columns([1, 4])
@@ -660,17 +707,19 @@ else:
 
 with col_main:
     if st.session_state.page == "home":
-        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
-        with col_hdr1:
-            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
-        with col_hdr_v:
-            v_col1, v_col2 = st.columns(2)
-            if v_col1.button("📱 DZIEŃ", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "dzień"; st.rerun()
-            if v_col2.button("📅 TYDZIEŃ", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "tydzień"; st.rerun()
-        with col_hdr2:
-            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
+        # Render desktop-only header controls
+        if not st.session_state.is_mobile:
+            col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
+            with col_hdr1:
+                st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+            with col_hdr_v:
+                v_col1, v_col2 = st.columns(2)
+                if v_col1.button("📱 DZIEŃ", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+                    st.session_state.calendar_view = "dzień"; st.rerun()
+                if v_col2.button("📅 TYDZIEŃ", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+                    st.session_state.calendar_view = "tydzień"; st.rerun()
+            with col_hdr2:
+                st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
