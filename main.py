@@ -130,15 +130,21 @@ def check_password():
         except:
             access_code = "170491"
         if st.session_state["password"] == access_code:
-            st.session_state.authenticated = True
-            # Signal JS to save this session
-            st.session_state.save_session = True
+            # First, save to localStorage via JS
+            st.session_state.save_session_now = True
+            # We don't set authenticated=True yet, JS will reload the page
             del st.session_state["password"]
         else:
             st.error("❌ Błędny kod dostępu")
 
-    # Form rendering only if not authenticated
-    if not st.session_state.authenticated:
+    if st.session_state.get('save_session_now'):
+        components.html(f"""
+            <script>
+            window.parent.localStorage.setItem('trainer_auth_ts', Date.now());
+            window.parent.location.reload();
+            </script>
+        """, height=0)
+        st.stop()
         st.markdown("""
         <style>
             .block-container { padding-top: 3rem !important; }
@@ -199,20 +205,7 @@ def check_password():
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
             if st.button("🔓  ZALOGUJ", use_container_width=True):
                 password_entered()
-                if st.session_state.authenticated:
-                    st.rerun()
             st.markdown('<p style="color:#444; font-size:11px; text-align:center; margin-top:16px;">Dostęp tylko dla uprawnionych osób</p>', unsafe_allow_html=True)
-        
-        # Hidden component to handle session saving
-        if st.session_state.get('save_session'):
-            components.html(f"""
-                <script>
-                const now = Date.now();
-                window.parent.localStorage.setItem('trainer_auth_ts', now);
-                window.parent.location.reload();
-                </script>
-            """, height=0)
-            st.session_state.save_session = False
         st.stop()
 
 check_password()
