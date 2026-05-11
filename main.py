@@ -482,45 +482,59 @@ function sendActionToStreamlit(actionStr) {
     }
 }
 
-if (!parentDoc.getElementById('injected-global-styles')) {
-    const style = parentDoc.createElement('style');
-    style.id = 'injected-global-styles';
+// Global styles injection (forced update)
+let existingStyle = parentDoc.getElementById('injected-global-styles');
+if (existingStyle) existingStyle.remove();
+const style = parentDoc.createElement('style');
+style.id = 'injected-global-styles';
     style.innerHTML = `
-        /* Top-level global fixes for Streamlit widgets */
+        /* ULTIMATE GLOBAL FIX FOR CALENDAR AND DROPDOWNS */
         div[data-baseweb="calendar"], 
-        div[data-baseweb="calendar"] header,
-        div[data-baseweb="calendar"] div[role="grid"],
-        div[data-baseweb="calendar"] div[role="presentation"],
-        div[data-baseweb="popover"] div[role="dialog"] {
+        div[data-baseweb="calendar"] *,
+        div[data-baseweb="popover"] div[role="dialog"],
+        div[data-baseweb="popover"] [role="listbox"] {
             background-color: #1c1c1e !important;
-            background: #1c1c1e !important;
+            color: white !important;
+            border-color: rgba(49, 213, 242, 0.3) !important;
+        }
+
+        /* Fix the header area (Month/Year) */
+        div[data-baseweb="calendar"] header,
+        div[data-baseweb="calendar"] header *,
+        div[data-baseweb="calendar"] [data-baseweb="select"] * {
+            background-color: #1c1c1e !important;
             color: white !important;
         }
-        div[data-baseweb="calendar"] button { color: white !important; }
-        div[data-baseweb="calendar"] svg { fill: #31d5f2 !important; }
-        
-        /* Selected and Hover states */
-        div[data-baseweb="calendar"] div[aria-selected="true"] {
+
+        /* Fix those white/bright blocks in the grid */
+        div[data-baseweb="calendar"] div[role="gridcell"],
+        div[data-baseweb="calendar"] div[role="gridcell"] * {
+            background-color: transparent !important;
+        }
+
+        /* Arrows and Icons */
+        div[data-baseweb="calendar"] svg {
+            fill: #31d5f2 !important;
+        }
+
+        /* Selection - BLUE instead of red */
+        div[data-baseweb="calendar"] div[aria-selected="true"],
+        div[data-baseweb="calendar"] div[aria-selected="true"] * {
             background-color: #31d5f2 !important;
             color: #000 !important;
             border-radius: 50% !important;
         }
+
+        /* Hover effect */
         div[data-baseweb="calendar"] div[role="gridcell"]:hover {
             background-color: rgba(49, 213, 242, 0.2) !important;
             border-radius: 50% !important;
         }
-        
-        /* Weekday labels */
-        div[data-baseweb="calendar"] div[role="grid"] > div:first-child > div {
-            color: #8b949e !important;
-            background: transparent !important;
-        }
 
-        /* Selectbox dropdowns */
-        div[data-baseweb="popover"], div[data-baseweb="menu"], [role="listbox"] {
-            background-color: #1c1c1e !important;
-            color: white !important;
-            border: 1px solid rgba(49, 213, 242, 0.3) !important;
+        /* Weekday labels (Su, Mo...) */
+        div[data-baseweb="calendar"] div[role="grid"] > div:first-child > div {
+            color: #31d5f2 !important;
+            font-weight: 800 !important;
         }
     `;
     parentDoc.head.appendChild(style);
