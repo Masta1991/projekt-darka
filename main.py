@@ -944,7 +944,7 @@ with col_side:
     
     # Square Dowodzenie Panel with Permanent Calendar
     # Hidden on Mobile - Desktop Only
-    st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+    # ...
     c = calendar.Calendar(firstweekday=0)
     month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
     months_pl = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
@@ -962,9 +962,8 @@ with col_side:
             if is_selected: style += " background: #31d5f2; color: #0d1117; font-weight: 800; box-shadow: 0 0 8px rgba(49,213,242,0.5);"
             grid_html += f'<span data-action="action=select_date&y={d_o.year}&m={d_o.month}&d={d_o.day}" style="display:inline-block; {style}">{d_o.day}</span>'
 
-    dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: justify; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div style="float:right;"><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
+    dowodzenie_html = f"""<div class="desktop-only" style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: justify; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div style="float:right;"><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
     st.markdown(dowodzenie_html, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # NOW we hide the Bento Tiles on Mobile
     st.markdown('<div class="mobile-sidebar-content">', unsafe_allow_html=True)
@@ -978,20 +977,21 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # Duplicate buttons and Header - Hidden on Mobile
-        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+        # Duplicate buttons and Header - Hidden on Mobile via the :has(.desktop-only) rule
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
+            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
         with col_hdr_v:
+            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
             v_col1, v_col2 = st.columns(2)
-            if v_col1.button("📱 DZIEŃ", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+            if v_col1.button("📱 DZIEŃ", key="v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "dzień"; st.rerun()
-            if v_col2.button("📅 TYDZIEŃ", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+            if v_col2.button("📅 TYDZIEŃ", key="v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "tydzień"; st.rerun()
         with col_hdr2:
-            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
+            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="v_edit_btn", on_click=toggle_edit, use_container_width=True)
         
         # 3. Kalendarz zapisów - Visible on mobile
         try:
