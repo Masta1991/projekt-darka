@@ -3,6 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import datetime
 import streamlit as st
+import os
 
 class DataHandler:
     def __init__(self, secrets_path='secrets.json'):
@@ -13,13 +14,22 @@ class DataHandler:
 
     def authenticate(self):
         try:
-            # First try Streamlit Secrets (for Cloud deployment)
-            if "gcp_service_account" in st.secrets:
-                creds_dict = st.secrets["gcp_service_account"]
+            # Try Streamlit Secrets (for Cloud deployment)
+            creds_dict = None
+            try:
+                if "gcp_service_account" in st.secrets:
+                    creds_dict = st.secrets["gcp_service_account"]
+            except Exception:
+                pass
+
+            if creds_dict:
                 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
             else:
                 # Fallback to local file
-                creds = ServiceAccountCredentials.from_json_keyfile_name(self.secrets_path, self.scope)
+                if os.path.exists(self.secrets_path):
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(self.secrets_path, self.scope)
+                else:
+                    return False
             
             self.client = gspread.authorize(creds)
             return True
