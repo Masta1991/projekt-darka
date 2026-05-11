@@ -414,13 +414,13 @@ if st.query_params.get("edit_mode") == "1":
 def toggle_edit():
     st.session_state.edit_mode = not st.session_state.edit_mode
 
-# --- Actions via Hidden Input (Navigation, Delete, Move) ---
-# Note: Screen width and auto-login are already handled by the first js_data_exchange input at the top of the file.
+# --- Actions via Hidden Input (Navigation, Delete, Move, Calendar) ---
 if js_data and js_data != st.session_state.get('last_js_data_action', ''):
     st.session_state.last_js_data_action = js_data
     try:
         parts = dict(p.split('=') for p in js_data.split('&'))
         action = parts.get('action')
+        
         if action == "nav":
             st.session_state.page = parts.get("page", "home")
             if "client" in parts: st.query_params["client"] = parts["client"]
@@ -431,7 +431,6 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
             date_str, h_p = parts.get("d"), int(parts.get("h", -1))
             if (date_str, h_p) in st.session_state.schedule_data:
                 st.session_state.schedule_data[(date_str, h_p)]['status'] = 'deleted'
-                # Update Google Sheets
                 event = st.session_state.schedule_data[(date_str, h_p)]
                 st.session_state.dh.update_calendar_event(date_str, h_p, event['name'], event['type'], 'deleted')
                 st.rerun()
@@ -441,39 +440,30 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
             if (f_date, f_h) in st.session_state.schedule_data:
                 val = st.session_state.schedule_data.pop((f_date, f_h))
                 st.session_state.schedule_data[(t_date, t_h)] = val
-                # Update Google Sheets (Delete old, Add new)
                 st.session_state.dh.update_calendar_event(f_date, f_h, val['name'], val['type'], 'deleted')
                 st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
                 st.rerun()
-    except: pass
-    
-    if js_data:
-        try:
-            parts = dict(p.split('=') for p in js_data.split('&'))
-            action = parts.get('action')
-            if action == "sync_weight":
-                ex = parts.get("ex")
-                val = float(parts.get("val", 0))
-                st.session_state.add_data_exercises[ex] = val
-            elif action == "toggle_ex":
-                ex = parts.get("ex")
-                status = parts.get("status")
-                val = float(parts.get("val", 0))
-                if status == "add":
-                    st.session_state.add_data_exercises[ex] = val
-                else:
-                    st.session_state.add_data_exercises.pop(ex, None)
-        except: pass
+        elif action == "sync_weight":
+            ex = parts.get("ex")
+            val = float(parts.get("val", 0))
+            st.session_state.add_data_exercises[ex] = val
+        elif action == "toggle_ex":
+            ex = parts.get("ex")
+            status, val = parts.get("status"), float(parts.get("val", 0))
+            if status == "add": st.session_state.add_data_exercises[ex] = val
+            else: st.session_state.add_data_exercises.pop(ex, None)
         elif action == "prev_month":
             st.session_state.mini_cal_date = st.session_state.mini_cal_date - relativedelta(months=1)
+            st.rerun()
         elif action == "next_month":
             st.session_state.mini_cal_date = st.session_state.mini_cal_date + relativedelta(months=1)
+            st.rerun()
         elif action == "select_date":
             st.session_state.selected_date = datetime.date(int(parts.get("y")), int(parts.get("m")), int(parts.get("d")))
             st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
+            st.rerun()
     except Exception as e:
-        print(f"Action error: {e}")
-    st.rerun()
+        pass
 
 # --- LAYOUT ---
 st.markdown('<div class="main-layout">', unsafe_allow_html=True)
