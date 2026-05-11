@@ -548,45 +548,47 @@ window.parent.trainerInterval = setInterval(() => {{
         p.style.setProperty('border-radius', '20px', 'important');
     }});
 
-    // 2. Fix all grid cells - make them transparent except the selected one
+    // 2. Fix all grid cells - make them match the calendar background by default
     calendar.querySelectorAll('[role="gridcell"]').forEach(cell => {{
         const isSelected = cell.getAttribute('aria-selected') === 'true';
+        const isDisabled = cell.getAttribute('aria-disabled') === 'true';
         const innerDiv = cell.querySelector('div');
         const button = cell.querySelector('button');
 
+        // Force the dark background on everything first
+        cell.style.setProperty('background-color', '#0d1117', 'important');
+        if (innerDiv) innerDiv.style.setProperty('background-color', '#0d1117', 'important');
+        if (button) button.style.setProperty('background-color', '#0d1117', 'important');
+
         if (isSelected) {{
             // Force blue solid circle
-            cell.style.setProperty('background-color', 'transparent', 'important'); // cell itself transparent
             if (innerDiv) {{
                 innerDiv.style.setProperty('background-color', '#31d5f2', 'important');
                 innerDiv.style.setProperty('border-radius', '50%', 'important');
                 innerDiv.style.setProperty('color', '#0d1117', 'important');
-                innerDiv.style.setProperty('box-shadow', '0 0 15px rgba(49,213,242,0.8)', 'important');
             }}
             if (button) {{
                 button.style.setProperty('background-color', '#31d5f2', 'important');
                 button.style.setProperty('color', '#0d1117', 'important');
                 button.style.setProperty('border-radius', '50%', 'important');
             }}
+        }} else if (isDisabled) {{
+            // Make other month days visible but dimmed
+            cell.style.setProperty('visibility', 'visible', 'important');
+            cell.style.setProperty('opacity', '0.3', 'important');
+            if (button) button.style.setProperty('color', '#8b949e', 'important');
         }} else {{
-            // Kill white strips - force transparency
-            cell.style.setProperty('background-color', 'transparent', 'important');
-            if (innerDiv) innerDiv.style.setProperty('background-color', 'transparent', 'important');
-            if (button) button.style.setProperty('background-color', 'transparent', 'important');
+            // Normal days
+            if (button) button.style.setProperty('color', 'white', 'important');
         }}
     }});
 
     // 3. Fix headers and arrows
     calendar.querySelectorAll('header, header *').forEach(h => {{
         h.style.setProperty('color', 'white', 'important');
-        h.style.setProperty('background-color', 'transparent', 'important');
+        h.style.setProperty('background-color', '#0d1117', 'important');
     }});
     calendar.querySelectorAll('svg').forEach(s => s.style.setProperty('fill', '#31d5f2', 'important'));
-
-    // 4. Hide disabled days
-    calendar.querySelectorAll('[aria-disabled="true"]').forEach(d => {{
-        d.style.setProperty('visibility', 'hidden', 'important');
-    }});
 }}, 250);
 
 // 3. Action Bridge
