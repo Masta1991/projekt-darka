@@ -80,6 +80,29 @@ class DataHandler:
             return True
         return False
 
+    def fetch_workout_results(self, client, date_str):
+        ws = self.get_worksheet("Treningi")
+        if ws:
+            try:
+                # Optimized fetch: get all and filter locally to avoid multiple API calls
+                data = ws.get_all_records()
+                results = {}
+                for row in data:
+                    # Match by client and date prefix of timestamp
+                    row_client = str(row.get('Klient', ''))
+                    row_ts = str(row.get('Timestamp', ''))
+                    if row_client == str(client) and row_ts.startswith(date_str):
+                        ex_name = row.get('Ćwiczenie')
+                        try:
+                            weight = float(str(row.get('Ciężar', '0')).replace(',', '.'))
+                        except:
+                            weight = 0.0
+                        results[ex_name] = weight
+                return results
+            except Exception:
+                return {}
+        return {}
+
     def fetch_clients(self):
         ws = self.get_worksheet("Klienci")
         if ws: return pd.DataFrame(ws.get_all_records())
@@ -852,6 +875,18 @@ with col_main:
             train_date = st.date_input("Data", value=datetime.datetime.strptime(q_day_str, "%Y-%m-%d").date() if q_day_str else st.session_state.selected_date)
         with col_h:
             train_hour = st.selectbox("Godzina", list(range(6, 22)), index=max(0, q_hour - 6))
+
+        # --- Smart Data Echo (Pre-fill existing results) ---
+        current_load_key = f"{klient}_{train_date.strftime('%Y-%m-%d')}"
+        if st.session_state.get('last_workout_load_key') != current_load_key:
+            existing = st.session_state.dh.fetch_workout_results(klient, train_date.strftime("%Y-%m-%d"))
+            if existing:
+                st.session_state.add_data_exercises = existing
+            else:
+                # Only clear if it was a deliberate change of client/date and no data found
+                if st.session_state.get('last_workout_load_key') is not None:
+                    st.session_state.add_data_exercises = {}
+            st.session_state.last_workout_load_key = current_load_key
 
         st.divider()
         c1, c2 = st.columns(2)
