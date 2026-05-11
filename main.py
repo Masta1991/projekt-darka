@@ -510,23 +510,46 @@ def local_css():
         justify-content: space-between;
         align-items: center;
         background: #1c1c1e;
-        padding: 15px 20px;
+        padding: 10px 15px;
         border-radius: 20px;
         margin-bottom: 20px;
         border: 1px solid rgba(49, 213, 242, 0.3);
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        gap: 8px;
     }
-    .mobile-logo { font-weight: 900; color: #31d5f2; font-size: 20px; }
-    .mobile-menu-btn {
-        background: rgba(49, 213, 242, 0.1);
-        border: 1px solid #31d5f2;
-        color: #31d5f2;
-        padding: 10px 18px;
-        border-radius: 12px;
-        font-weight: 800;
+    .mobile-logo { font-weight: 900; color: #31d5f2; font-size: 16px; flex-shrink: 0; }
+    .hdr-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700;
         cursor: pointer;
-        text-transform: uppercase;
-        font-size: 12px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+    .hdr-btn.active { border-color: #31d5f2; color: #31d5f2; background: rgba(49,213,242,0.1); }
+    
+    .mobile-menu-btn {
+        background: #31d5f2;
+        border: none;
+        color: #0d1117;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 900;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    /* Hide JS Data Exchange */
+    div[data-testid="stTextInput"]:has(input[aria-label="js_data_exchange"]) {
+        height: 0 !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        opacity: 0 !important;
+        overflow: hidden !important;
     }
 
     /* MOBILE NAV DROPDOWN */
@@ -844,6 +867,12 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             st.session_state.mobile_menu = False # Close menu after navigation
         elif action == "toggle_menu":
             st.session_state.mobile_menu = not st.session_state.mobile_menu
+        elif action == "v_day":
+            st.session_state.calendar_view = "dzień"
+        elif action == "v_week":
+            st.session_state.calendar_view = "tydzień"
+        elif action == "v_edit":
+            st.session_state.edit_mode = not st.session_state.edit_mode
         elif action == "open_event":
             st.session_state.page = "add_data"
             st.session_state.event_client = parts.get('client', '')
@@ -866,9 +895,18 @@ def toggle_mobile_menu():
     st.session_state.mobile_menu = not st.session_state.mobile_menu
 
 # Mobile Header (Visible only on mobile via CSS)
+v_day_cls = "active" if st.session_state.calendar_view == "dzień" else ""
+v_week_cls = "active" if st.session_state.calendar_view == "tydzień" else ""
+v_edit_cls = "active" if st.session_state.edit_mode else ""
+
 st.markdown(f"""
     <div class="mobile-header">
         <div class="mobile-logo">TRAINER PRO</div>
+        <div style="display: flex; gap: 4px;">
+            <div class="hdr-btn {v_day_cls}" data-action="action=v_day">DZIEŃ</div>
+            <div class="hdr-btn {v_week_cls}" data-action="action=v_week">TYDZIEŃ</div>
+            <div class="hdr-btn {v_edit_cls}" data-action="action=v_edit">EDYTUJ</div>
+        </div>
         <div class="mobile-menu-btn" data-action="action=toggle_menu">MENU</div>
     </div>
 """, unsafe_allow_html=True)
@@ -957,7 +995,8 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+        # Always visible on mobile home now, but we wrap in a class for potential styling
+        st.markdown('<div class="calendar-main-view">', unsafe_allow_html=True)
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
@@ -1022,7 +1061,7 @@ with col_main:
                 full_html += '</div>'
             full_html += '</div>'
             st.markdown(full_html, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True) # Close desktop-only
+            st.markdown('</div>', unsafe_allow_html=True) # Close calendar-main-view
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
 
