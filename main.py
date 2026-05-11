@@ -44,14 +44,13 @@ def check_password():
             access_code = st.secrets.get("access_code", "170491")
         except:
             access_code = "170491"
-        if st.session_state["password"] == access_code:
+        pwd = st.session_state.get("password", "")
+        if pwd == access_code:
             st.session_state.authenticated = True
-            # Save to localStorage
-            components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
-            del st.session_state["password"]
-            st.rerun()
+            st.session_state.save_login = True
         else:
-            st.error("❌ Błędny kod dostępu")
+            if pwd:
+                st.error("❌ Błędny kod dostępu")
 
     st.markdown("""
     <style>
@@ -81,6 +80,11 @@ def check_password():
 
 if not check_password():
     st.stop()
+
+# Save login to localStorage (runs after successful auth, outside callback)
+if st.session_state.get('save_login'):
+    st.session_state.save_login = False
+    components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
 # --- Navigation Logic ---
 if "page" in st.query_params:
@@ -359,7 +363,7 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             st.session_state.event_day = int(parts.get('day', 0))
     except Exception as e:
         print(f"Action error: {e}")
-    st.rerun()
+    # Don't call st.rerun() - Streamlit handles it natively via text_input change
 
 # --- LAYOUT ---
 st.markdown('<div class="main-layout">', unsafe_allow_html=True)
