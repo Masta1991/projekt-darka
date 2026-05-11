@@ -458,7 +458,16 @@ if (existing) existing.remove();
 const s = doc.createElement('style');
 s.id = styleId;
 s.innerHTML = `
-    /* ATOMOWY FIX - PORTAL SYNC REMOVED */
+    /* STYLIZACJA LIST Z MAPY (2, 4, 5, 6) */
+    [role="listbox"], [role="option"], [role="option"] * {{
+        background-color: #1c1c1e !important;
+        color: white !important;
+    }}
+    /* Podświetlenie */
+    [role="option"]:hover, [role="option"][aria-selected="true"] {{
+        background-color: rgba(49, 213, 242, 0.1) !important;
+        color: #31d5f2 !important;
+    }}
 `;
 doc.head.appendChild(s);
 
