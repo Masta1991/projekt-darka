@@ -12,6 +12,7 @@ import os
 import time
 import calendar
 from dateutil.relativedelta import relativedelta
+import urllib.parse
 import streamlit.components.v1 as components
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -97,8 +98,10 @@ class DataHandler:
                     row_ts = str(row[0])
                     row_client = str(row[1])
                     
-                    if row_client == str(client) and row_ts.startswith(date_str):
-                        ex_name = str(row[2])
+                    # Flex check: if date_str "2026-05-11" is inside "2026-05-11 14:40"
+                    if row_client == str(client) and date_str in row_ts:
+                        # Decode in case of legacy encoded data in sheet
+                        ex_name = urllib.parse.unquote(str(row[2]))
                         try:
                             weight_str = str(row[3]).replace(',', '.')
                             weight = float(weight_str)
@@ -684,7 +687,8 @@ def clear_schedule():
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
     try:
-        parts = dict(p.split('=') for p in js_data.split('&'))
+        # Decode URL-encoded parts (ex: %20 -> space)
+        parts = {k: urllib.parse.unquote(v) for k, v in [p.split('=') for p in js_data.split('&')]}
         action = parts.get('action')
         if action == "auto_login":
             st.session_state.authenticated = True
