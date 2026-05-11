@@ -590,13 +590,14 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
 # --- LAYOUT LOGIC ---
 if 'show_mobile_menu' not in st.session_state:
     st.session_state.show_mobile_menu = False
+if 'is_mobile' not in st.session_state:
+    st.session_state.is_mobile = False
 
 sel_date = st.session_state.get('selected_date', datetime.date.today())
 day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == sel_date.weekday() and v['status'] == 'active']
 
 def render_sidebar_tiles():
     st.markdown('<div class="part-label">MENU</div>', unsafe_allow_html=True)
-    
     tiles = [
         {"id": "home", "label": "GRAFIK", "title": "Harmonogram", "desc": "Zarządzaj treningami", "img": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=400"},
         {"id": "klienci", "label": "KLIENCI", "title": "Baza Osób", "desc": "Lista Twoich klientów", "img": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=400"},
@@ -604,7 +605,6 @@ def render_sidebar_tiles():
         {"id": "raporty", "label": "RAPORTY", "title": "Podsumowania", "desc": "Dziennik treningowy", "img": "https://images.unsplash.com/photo-1454165833767-027ffea9e778?auto=format&fit=crop&q=80&w=400"},
         {"id": "konfiguracja", "label": "USTAWIENIA", "title": "Konfiguracja", "desc": "Opcje aplikacji", "img": "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&q=80&w=400"}
     ]
-    
     for t in tiles:
         active_border = "border-color: #31d5f2; background: #252528;" if st.session_state.page == t['id'] else ""
         st.markdown(f"""
@@ -629,7 +629,7 @@ if st.session_state.get('is_mobile') and st.session_state.show_mobile_menu:
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-if st.session_state.get('is_mobile'):
+if st.session_state.is_mobile:
     st.markdown(f'<div class="mobile-header"><div style="font-weight:900; color:#31d5f2;">TRAINER PRO</div><div class="mobile-menu-btn" data-action-stop="action=open_menu">MENU ☰</div></div>', unsafe_allow_html=True)
     if 'action=open_menu' in st.session_state.get('last_js_data_action', ''):
         st.session_state.show_mobile_menu = True
@@ -640,25 +640,18 @@ else:
     col_side, col_main = st.columns([1, 4])
     with col_side:
         render_sidebar_tiles()
-        # Square Dowodzenie Panel with Permanent Calendar
         c = calendar.Calendar(firstweekday=0)
         month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
         months_pl = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         month_str = f"{st.session_state.mini_cal_date.year} {months_pl[st.session_state.mini_cal_date.month-1]}"
-    
-        grid_html = ""
-        for d in ["P", "W", "Ś", "C", "P", "S", "N"]: grid_html += f'<div style="color: #8b949e;">{d}</div>'
-        
+        grid_html = "".join([f'<div style="color: #8b949e;">{d}</div>' for d in ["P", "W", "Ś", "C", "P", "S", "N"]])
         for week in month_cal:
             for d in week:
-                is_current_month = d.month == st.session_state.mini_cal_date.month
-                is_selected = d == sel_date
-                color = "#444" if not is_current_month else "white"
+                color = "#444" if d.month != st.session_state.mini_cal_date.month else "white"
                 style = f"color: {color}; cursor: pointer; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; margin: 0 auto;"
-                if is_selected: style += " background: #31d5f2; color: #0d1117; font-weight: 800; box-shadow: 0 0 8px rgba(49,213,242,0.5);"
+                if d == sel_date: style += " background: #31d5f2; color: #0d1117; font-weight: 800; box-shadow: 0 0 8px rgba(49,213,242,0.5);"
                 grid_html += f'<span data-action="action=select_date&y={d.year}&m={d.month}&d={d.day}" style="display:inline-block; {style}">{d.day}</span>'
-
-        dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
+        dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e;"><span>{month_str}</span><div><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px;">{grid_html}</div></div></div>"""
         st.markdown(dowodzenie_html, unsafe_allow_html=True)
 
         bento_tile("ADMINISTRACJA", "Dodaj dane", "Treningi i pomiary", "tile_add_data_1778074195381.png", "add_data")
