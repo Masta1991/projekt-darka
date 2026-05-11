@@ -204,14 +204,28 @@ def local_css():
         border-color: #31d5f2 !important;
     }
 
-    /* Widget Labels - Force High Visibility White */
-    div[data-testid="stWidgetLabel"] p {
+    /* Widget Labels & Headers - Force High Visibility White */
+    div[data-testid="stWidgetLabel"] p, 
+    label, 
+    .stSubheader, 
+    .page-title,
+    div[data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
         font-weight: 700 !important;
+        opacity: 1 !important;
+    }
+    
+    div[data-testid="stWidgetLabel"] p {
         font-size: 0.9rem !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        opacity: 1 !important;
+    }
+
+    /* Page and Section Titles */
+    .page-title {
+        font-size: 28px !important;
+        font-weight: 900 !important;
+        margin-bottom: 20px !important;
     }
 
     /* Dropdown Menu Styling */
