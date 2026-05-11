@@ -85,25 +85,26 @@ class DataHandler:
         ws = self.get_worksheet("Treningi")
         if ws:
             try:
-                # get_all_values is safer for sheets with non-ascii headers
                 all_values = ws.get_all_values()
                 if not all_values or len(all_values) < 2:
                     return {}
                 
                 results = {}
-                # row structure: [0:Timestamp, 1:Klient, 2:Ćwiczenie, 3:Obciążenie, 4:Tydzień]
+                # Normalize search parameters
+                search_client = str(client).strip().lower()
+                search_date = date_str.replace('/', '-').strip()
+                
                 for row in all_values[1:]:
                     if len(row) < 4: continue
                     
-                    row_ts = str(row[0])
-                    row_client = str(row[1])
+                    row_ts = str(row[0]).replace('/', '-').strip()
+                    row_client = str(row[1]).strip().lower()
                     
-                    # Flex check: if date_str "2026-05-11" is inside "2026-05-11 14:40"
-                    if row_client == str(client) and date_str in row_ts:
-                        # Decode in case of legacy encoded data in sheet
-                        ex_name = urllib.parse.unquote(str(row[2]))
+                    if row_client == search_client and search_date in row_ts:
+                        # Decode and clean exercise name
+                        ex_name = urllib.parse.unquote(str(row[2])).strip()
                         try:
-                            weight_str = str(row[3]).replace(',', '.')
+                            weight_str = str(row[3]).replace(',', '.').strip()
                             weight = float(weight_str)
                         except:
                             weight = 0.0
