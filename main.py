@@ -12,9 +12,22 @@ import streamlit.components.v1 as components
 # --- Page Config ---
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
-# --- Authentication ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+
+# --- JS Data Exchange Bridge (Must be rendered early for persistent login) ---
+js_data = st.text_input("js_data_exchange", key="js_data_exchange", label_visibility="hidden")
+if js_data and js_data != st.session_state.get('last_js_data', ''):
+    st.session_state.last_js_data = js_data
+    try:
+        parts = dict(p.split('=') for p in js_data.split('&'))
+        if 'w' in parts:
+            st.session_state.screen_width = int(parts['w'])
+            st.session_state.is_mobile = st.session_state.screen_width < 768
+        if parts.get('action') == 'auto_login':
+            st.session_state.authenticated = True
+            st.rerun()
+    except: pass
 
 def check_password():
     def password_entered():
@@ -30,12 +43,8 @@ def check_password():
         else:
             st.error("❌ Błędny kod dostępu")
 
-    # Check for auto-login from JS bridge
+    # Form rendering only if not authenticated
     if not st.session_state.authenticated:
-        js_data = st.session_state.get('last_js_data', '')
-        if 'action=auto_login' in js_data:
-            st.session_state.authenticated = True
-            st.rerun()
         st.markdown("""
         <style>
             .block-container { padding-top: 3rem !important; }
@@ -407,17 +416,9 @@ def toggle_edit():
 
 # --- Actions via Hidden Input ---
 js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
-if js_data and js_data != st.session_state.get('last_js_data', ''):
-    st.session_state.last_js_data = js_data
-    try:
-        parts = dict(p.split('=') for p in js_data.split('&'))
-        
-        # Capture screen width
-        if 'w' in parts:
-            st.session_state.screen_width = int(parts['w'])
-            st.session_state.is_mobile = st.session_state.screen_width < 768
-
-        action = parts.get('action')
+# Handled at the top of the file now for persistent login
+if False: # Placeholder to remove old block
+    pass
         if action == "nav":
             st.session_state.page = parts.get("page", "home")
             if "client" in parts: st.query_params["client"] = parts["client"]
