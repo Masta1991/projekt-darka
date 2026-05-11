@@ -323,37 +323,64 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* --- KOD FIX DLA KALENDARZA "DATA" --- */
-    /* 1. Panel i tło */
-    [data-baseweb="popover"], [data-baseweb="calendar"], [role="grid"] {
+    /* --- ATOMOWY FIX DLA KALENDARZA "Data Treningu" --- */
+    /* 1. Główne tło - czyścimy wszystko dookoła */
+    [data-baseweb="popover"], 
+    [data-baseweb="calendar"], 
+    [role="grid"] {
         background-color: #0d1117 !important;
-        background: #0d1117 !important;
         border-radius: 20px !important;
-    }
-
-    /* 2. SIŁOWE USUNIĘCIE BIAŁYCH PROSTOKĄTÓW */
-    [data-baseweb="calendar"] [role="gridcell"],
-    [data-baseweb="calendar"] [role="gridcell"] > div {
-        background-color: transparent !important;
-        background: transparent !important;
         border: none !important;
     }
 
-    /* 3. STYLIZACJA WYBRANEGO DNIA (Tylko w kalendarzu!) */
-    [data-baseweb="calendar"] [aria-selected="true"] {
-        background-color: #31d5f2 !important;
-        color: #0d1117 !important;
-        border-radius: 50% !important;
-        box-shadow: 0 0 15px rgba(49, 213, 242, 0.6) !important;
+    /* 2. LIKWIDACJA BIAŁYCH BLOKÓW (Selektor agresywny) */
+    [data-baseweb="calendar"] * {
+        background-color: transparent !important;
     }
 
+    /* 3. Ukrywamy całkowicie puste/nieaktywne dni */
+    [data-baseweb="calendar"] [aria-disabled="true"] {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* 4. STYLIZACJA WYBRANEGO DNIA (Błękitny Glow) */
+    [data-baseweb="calendar"] [aria-selected="true"],
+    [data-baseweb="calendar"] [aria-selected="true"] button,
     [data-baseweb="calendar"] [aria-selected="true"] > div {
         background-color: #31d5f2 !important;
+        background: #31d5f2 !important;
         color: #0d1117 !important;
-        font-weight: 700 !important;
+        border-radius: 50% !important;
+        box-shadow: 0 0 15px rgba(49, 213, 242, 0.8) !important;
     }
 
-    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Czyste podświetlenie */
+    /* 5. Nagłówek i nawigacja (Miesiąc, Rok, Strzałki) */
+    [data-baseweb="calendar"] header, 
+    [data-baseweb="calendar"] header * {
+        color: white !important;
+        background-color: transparent !important;
+    }
+
+    [data-baseweb="calendar"] svg {
+        fill: #31d5f2 !important;
+    }
+
+    /* Nazwy dni (Su, Mo, Tu...) */
+    [data-baseweb="calendar"] [role="gridcell"] {
+        color: #8b949e !important;
+        font-size: 0.8rem !important;
+        background-color: transparent !important;
+    }
+
+    /* 6. Fix dla pola wprowadzania (Input) */
+    div[data-baseweb="input"] {
+        background-color: #1c1c1e !important;
+        border-radius: 10px !important;
+    }
+
+    /* --- STYLIZACJA LIST ROZWIJALNYCH (Standard z Mapy) --- */
+    /* Dotyczy: Lista Podopieczny, Godzina Treningu, Lista Główna Partia, Lista Partia Uzupełniająca */
     [role="option"] {
         background-color: transparent !important;
         transition: background 0.2s !important;
@@ -366,23 +393,11 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* Usunięcie wszelkich wewnętrznych ramek i tła dzieci */
     [role="option"] * {
         background-color: transparent !important;
         background: transparent !important;
         border: none !important;
     }
-
-    /* 5. Kolory tekstu i ikon */
-    [data-baseweb="calendar"] header, 
-    [data-baseweb="calendar"] select {
-        color: white !important;
-        background-color: transparent !important;
-    }
-
-    [data-baseweb="calendar"] svg { fill: #31d5f2 !important; }
-    [data-baseweb="calendar"] [role="gridcell"] { color: #8b949e !important; }
-    [aria-disabled="true"] { visibility: hidden !important; opacity: 0 !important; }
 
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
