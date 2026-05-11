@@ -353,13 +353,14 @@ def local_css():
         font-weight: 700 !important;
     }
 
-    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Naprawa "Ovalu" */
+    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Delikatne podświetlenie */
     [role="listbox"] [aria-selected="true"],
-    [role="option"][aria-selected="true"] {
-        background-color: #31d5f2 !important;
-        color: #0d1117 !important;
-        border-radius: 8px !important; /* Prostokątny z lekkim zaokrągleniem */
-        box-shadow: none !important;   /* Brak poświaty dla listy */
+    [role="option"][aria-selected="true"],
+    [role="option"]:hover {
+        background-color: rgba(49, 213, 242, 0.1) !important;
+        color: #31d5f2 !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     /* 5. Kolory tekstu i ikon */
