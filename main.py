@@ -92,12 +92,17 @@ class DataHandler:
                     row_client = str(row.get('Klient', ''))
                     row_ts = str(row.get('Timestamp', ''))
                     if row_client == str(client) and row_ts.startswith(date_str):
-                        ex_name = row.get('Ćwiczenie')
+                        # Try different possible keys for Exercise and Weight (due to encoding/naming)
+                        ex_name = row.get('Ćwiczenie') or row.get('wiczenie')
+                        
+                        raw_weight = row.get('Obciążenie') or row.get('Obcienie') or row.get('Ciężar') or '0'
                         try:
-                            weight = float(str(row.get('Ciężar', '0')).replace(',', '.'))
+                            weight = float(str(raw_weight).replace(',', '.'))
                         except:
                             weight = 0.0
-                        results[ex_name] = weight
+                        
+                        if ex_name:
+                            results[ex_name] = weight
                 return results
             except Exception:
                 return {}
