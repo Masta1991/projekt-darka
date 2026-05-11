@@ -42,13 +42,11 @@ if (!window.initialReportSent) {
     setTimeout(() => {
         const authTs = localStorage.getItem('trainer_auth_ts');
         const now = Date.now();
-        let action = 'action=init';
-        if (authTs && (now - parseInt(authTs)) < 14400000) {
-            action = 'action=auto_login';
-        }
+        // Only auto-login if token is valid, otherwise just init
+        let action = (authTs && (now - parseInt(authTs)) < 14400000) ? 'action=auto_login' : 'action=init';
         sendActionToStreamlit(action);
         window.initialReportSent = true;
-    }, 500);
+    }, 1000);
 }
 
 if (!parentDoc.getElementById('injected-global-script')) {
@@ -101,6 +99,13 @@ if (!parentDoc.getElementById('injected-global-script')) {
                 }
             });
         }
+        document.body.addEventListener('click', (e) => {
+            const actionEl = e.target.closest('[data-action]');
+            if (actionEl) {
+                e.stopPropagation(); e.preventDefault();
+                window.parent.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+            }
+        });
     `;
     parentDoc.body.appendChild(s);
 }
@@ -111,15 +116,21 @@ components.html(js_code, height=0, width=0)
 
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
-    try:
-        parts = dict(p.split('=') for p in js_data.split('&'))
-        if 'w' in parts:
-            st.session_state.screen_width = int(parts['w'])
-            st.session_state.is_mobile = st.session_state.screen_width < 768
-        if parts.get('action') == 'auto_login':
+    parts = dict(p.split('=') for p in js_data.split('&') if '=' in p)
+    
+    if 'w' in parts:
+        new_width = int(parts['w'])
+        if abs(new_width - st.session_state.get('screen_width', 0)) > 50:
+            st.session_state.screen_width = new_width
+            st.session_state.is_mobile = new_width < 768
+    
+    if 'action' in parts:
+        action = parts['action']
+        if action == 'auto_login':
             st.session_state.authenticated = True
+        elif action != 'init':
+            st.session_state.last_js_data_action = js_data
             st.rerun()
-    except: pass
 
 def check_password():
     def password_entered():
