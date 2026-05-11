@@ -841,14 +841,17 @@ with col_main:
                 st.session_state.add_data_exercises = {}; st.rerun()
         with f_col3:
             if st.button("ZAPISZ TRENING", type="primary", use_container_width=True):
-                if st.session_state.add_data_exercises:
-                    d_s = train_date.strftime("%Y-%m-%d")
-                    if st.session_state.dh.update_calendar_event(d_s, train_hour, klient, main_p.capitalize()):
-                        for ex, weight in st.session_state.add_data_exercises.items():
-                            st.session_state.dh.save_workout_result(klient, ex, weight, st.session_state.selected_week)
-                        st.session_state.schedule_data[(d_s, train_hour)] = {'name': klient, 'type': main_p.capitalize(), 'status': 'active'}
-                        st.success("Zapisano!"); time.sleep(1); st.session_state.add_data_exercises = {}; st.session_state.page = "home"; st.rerun()
-                else: st.error("Wybierz ćwiczenie!")
+                d_s = train_date.strftime("%Y-%m-%d")
+                # Save the main calendar event (always allow this)
+                if st.session_state.dh.update_calendar_event(d_s, train_hour, klient, main_p.capitalize()):
+                    # Save individual exercises if any were selected
+                    for ex, weight in st.session_state.add_data_exercises.items():
+                        st.session_state.dh.save_workout_result(klient, ex, weight, st.session_state.selected_week)
+                    
+                    # Update local state and show success
+                    st.session_state.schedule_data[(d_s, train_hour)] = {'name': klient, 'type': main_p.capitalize(), 'status': 'active'}
+                    st.success("Zapisano trening!"); time.sleep(1)
+                    st.session_state.add_data_exercises = {}; st.session_state.page = "home"; st.rerun()
 
     elif st.session_state.page == "settings":
         st.subheader("⚙️ Konfiguracja")
