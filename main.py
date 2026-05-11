@@ -15,6 +15,10 @@ st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="w
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Initialize DataHandler
+if 'dh' not in st.session_state:
+    st.session_state.dh = DataHandler()
+
 # --- Authentication ---
 def check_password():
     # Session timeout check (4h = 14400 seconds)
@@ -102,10 +106,9 @@ if st.session_state.get('save_login'):
     components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
 # --- Navigation Logic ---
-if "page" in st.query_params:
-    st.session_state.page = st.query_params["page"]
-else:
-    st.session_state.page = "home"
+# Ensure page persists across reruns
+if "page" not in st.session_state:
+    st.session_state.page = st.query_params.get("page", "home")
 
 # --- CSS Injection (Premium Dark) ---
 def local_css():
@@ -118,7 +121,8 @@ def local_css():
     .block-container { padding-top: 1.5rem !important; max-width: 98% !important; }
     
     /* Hide JS Bridge Input completely but keep it focusable */
-    div[data-testid="stTextInput"]:has(input[aria-label="js_data_exchange"]) {
+    div[data-testid="stTextInput"]:has(input[aria-label="js_data_exchange"]),
+    div[data-testid="stTextInput"]:has(input[id*="js_data_input"]) {
         position: absolute !important;
         left: -9999px !important;
         opacity: 0 !important;
@@ -151,13 +155,16 @@ def local_css():
     .tile-desc { font-size: 11px; color: #8b949e; line-height: 1.2; }
 
     /* Calendar Premium Grid */
-    .calendar-wrapper { background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); padding: 20px; }
-    .calendar-grid-header { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 10px; margin-bottom: 15px; }
+    .calendar-wrapper { 
+        background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); 
+        padding: 20px; overflow-x: auto;
+    }
+    .calendar-grid-header { display: grid; gap: 10px; margin-bottom: 15px; }
     .day-header { text-align: center; color: #8b949e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
     .day-header.today { color: #31d5f2; }
-    .calendar-row { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
+    .calendar-row { display: grid; gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
     .time-col { color: #444; font-size: 11px; font-weight: 700; padding-top: 10px; text-align: right; padding-right: 15px; }
-    .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; }
+    .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 100px; }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
 
     /* Event Card */
@@ -165,6 +172,8 @@ def local_css():
         background: rgba(49, 213, 242, 0.1); border-left: 4px solid #31d5f2; border-radius: 8px;
         padding: 8px 12px; height: calc(100% - 10px); margin: 5px; cursor: pointer;
         transition: all 0.2s; position: relative; user-select: none;
+        display: flex; flex-direction: column; justify-content: center;
+        width: calc(100% - 10px); box-sizing: border-box; /* Force uniform width */
     }
     .event-card:hover { transform: translateY(-2px); background: rgba(49, 213, 242, 0.2); }
     .event-name { font-weight: 800; font-size: 13px; color: white; margin-bottom: 2px; }
@@ -279,9 +288,9 @@ def local_css():
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
 
     /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .calendar-wrapper { padding: 10px; border-radius: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .calendar-grid-header, .calendar-row { min-width: 600px; }
+    @media (max-width: 1000px) {
+        .calendar-wrapper { padding: 10px; border-radius: 16px; }
+        .calendar-grid-header, .calendar-row { min-width: 800px; }
         .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
     }
 </style>
@@ -302,7 +311,7 @@ def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
     active_border = "border-color: #31d5f2; background: #252528;" if st.session_state.page == page_name else ""
     st.markdown(f"""
-        <a class="tile-link" style="{active_border}" data-action="action=nav&page={page_name}">
+        <div class="tile-link" style="{active_border}" data-action="action=nav&page={page_name}">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -310,7 +319,7 @@ def bento_tile(label, title, desc, img, page_name):
                 <div class="tile-title">{title}</div>
                 <div class="tile-desc">{desc}</div>
             </div>
-        </a>
+        </div>
     """, unsafe_allow_html=True)
 
 def get_pl_date(d):
@@ -318,20 +327,28 @@ def get_pl_date(d):
     days_pl = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"]
     return f"{days_pl[d.weekday()]}, {d.day} {months[d.month-1]}"
 
-# --- State ---
-def get_global_schedule():
-    clients_pool = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
-    exercises = ["Nogi", "Klatka piersiowa", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
-    data = {}
-    for d in range(6):
-        for h in [7, 8, 10, 11, 17, 18, 19]:
-            c_idx = (d + h) % len(clients_pool)
-            e_idx = (h) % len(exercises)
-            data[(d, h)] = {'name': clients_pool[c_idx], 'type': exercises[e_idx], 'status': 'active'}
-    return data
+# --- State & Data ---
+def load_data_from_db():
+    try:
+        df = st.session_state.dh.fetch_calendar()
+        new_data = {}
+        if not df.empty:
+            for _, row in df.iterrows():
+                try:
+                    d_str = str(row['Dzień'])
+                    h = int(row['Godzina'])
+                    new_data[d_str, h] = {
+                        'name': row['Klient'],
+                        'type': row['Typ'],
+                        'status': row.get('Status', 'active')
+                    }
+                except: continue
+        return new_data
+    except:
+        return {}
 
 if 'schedule_data' not in st.session_state:
-    st.session_state.schedule_data = get_global_schedule()
+    st.session_state.schedule_data = load_data_from_db()
 
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'selected_date' not in st.session_state: st.session_state.selected_date = datetime.date.today()
@@ -378,12 +395,12 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             st.session_state.page = "add_data"
             st.session_state.event_client = parts.get('client', '')
             st.session_state.event_hour = int(parts.get('hour', 12))
-            st.session_state.event_day = int(parts.get('day', 0))
+            st.session_state.event_day_idx = int(parts.get('day', 0))
         elif action == "add_event":
             st.session_state.page = "add_data"
             st.session_state.event_client = ''
             st.session_state.event_hour = int(parts.get('hour', 12))
-            st.session_state.event_day = int(parts.get('day', 0))
+            st.session_state.event_day_idx = int(parts.get('day', 0))
     except Exception as e:
         print(f"Action error: {e}")
 
@@ -453,16 +470,19 @@ with col_main:
             week_start = sel_date - datetime.timedelta(days=sel_date.weekday())
             
             full_html += f'<div class="calendar-grid-header" style="{cols_css}"><div class="day-header"></div>'
+            current_week_dates = []
             for i in show_days:
                 today_cls = "today" if i == sel_date.weekday() else ""
                 day_date = week_start + datetime.timedelta(days=i)
+                current_week_dates.append(day_date.strftime("%Y-%m-%d"))
                 full_html += f'<div class="day-header {today_cls}">{all_days[i]}<br><span style="font-size:10px; color:#555;">{day_date.day}.{day_date.month}</span></div>'
             full_html += '</div>'
             
             for h in range(6, 22):
                 full_html += f'<div class="calendar-row" style="{cols_css}"><div class="time-col">{h}:00</div>'
-                for d in show_days:
-                    key = (d, h)
+                for idx, d_idx in enumerate(show_days):
+                    d_str = current_week_dates[idx]
+                    key = (d_str, h)
                     event = st.session_state.schedule_data.get(key)
                     cell_content = ""
                     if event:
@@ -556,15 +576,21 @@ with col_main:
             exercises = exercises_dict.get(part_name, [])[:5] 
             for i, ex in enumerate(exercises):
                 is_sel = ex in st.session_state.add_data_exercises
+                btn_type = "primary" if is_sel else "secondary"
+                btn_label = f"🔵 {ex}" if is_sel else f"⚪ {ex}"
                 
-                # Hidden marker to style the adjacent button
-                active_class = "btn-active" if is_sel else "btn-inactive"
-                st.markdown(f'<div class="ex-btn-marker {active_class}"></div>', unsafe_allow_html=True)
-                
-                if st.button(ex, key=f"sel_{part_name}_{i}", use_container_width=True):
-                    if is_sel: del st.session_state.add_data_exercises[ex]
-                    else: st.session_state.add_data_exercises[ex] = 20.0
-                    st.rerun()
+                with st.container():
+                    col_btn, col_kg = st.columns([3, 1])
+                    if col_btn.button(btn_label, key=f"sel_{part_name}_{i}", type=btn_type, use_container_width=True):
+                        if is_sel: del st.session_state.add_data_exercises[ex]
+                        else: st.session_state.add_data_exercises[ex] = 20.0
+                        st.rerun()
+                    
+                    if is_sel:
+                        current_kg = st.session_state.add_data_exercises.get(ex, 20.0)
+                        new_kg = col_kg.number_input("kg", min_value=0.0, max_value=500.0, value=float(current_kg), step=2.5, key=f"kg_{part_name}_{i}")
+                        if new_kg != current_kg:
+                            st.session_state.add_data_exercises[ex] = new_kg
 
             
         with c1:
@@ -591,17 +617,26 @@ with col_main:
             if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
                 if st.session_state.add_data_exercises:
                     ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
-                    save_day = train_date.weekday()
-                    st.session_state.schedule_data[(save_day, train_hour)] = {
-                        'name': klient, 
-                        'type': main_part.capitalize(), 
-                        'info': ex_summary,
-                        'status': 'active'
-                    }
-                    st.success("Zapisano trening!")
-                    time.sleep(1)
-                    st.session_state.add_data_exercises = {}
-                    st.session_state.page = "home"; st.rerun()
+                    d_str = train_date.strftime("%Y-%m-%d")
+                    
+                    # Save to Google Sheets
+                    success = st.session_state.dh.update_calendar_event(d_str, train_hour, klient, main_part.capitalize())
+                    if success:
+                        for ex, weight in st.session_state.add_data_exercises.items():
+                            st.session_state.dh.save_workout_result(klient, ex, weight, st.session_state.selected_week)
+                        
+                        # Update local state
+                        st.session_state.schedule_data[(d_str, train_hour)] = {
+                            'name': klient, 
+                            'type': main_part.capitalize(), 
+                            'status': 'active'
+                        }
+                        st.success("Zapisano trening w bazie danych!")
+                        time.sleep(1)
+                        st.session_state.add_data_exercises = {}
+                        st.session_state.page = "home"; st.rerun()
+                    else:
+                        st.error("Błąd zapisu do bazy danych!")
                 else:
                     st.error("Wybierz przynajmniej jedno ćwiczenie!")
 
