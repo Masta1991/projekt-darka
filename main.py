@@ -451,170 +451,107 @@ local_css()
 # --- Actions via Hidden Input (CONSOLIDATED) ---
 js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibility="collapsed")
 
-# --- JS Bridge Script (Injected Globally) ---
-js_bridge = """
-<script>
-const parentDoc = window.parent.document;
+# --- JS Bridge Script (Injected via Markdown Hack for Maximum Stability) ---
+bridge_html = f"""
+<img src="x" onerror="
+    const doc = document;
+    
+    // 1. Send Action to Streamlit function
+    window.sendActionToStreamlit = function(actionStr) {{
+        let targetInput = null;
+        const inputs = doc.querySelectorAll('input');
+        inputs.forEach(el => {{
+            if(el.getAttribute('aria-label') === 'js_data_exchange' || (el.id && el.id.includes('js_data_input'))) {{
+                targetInput = el;
+            }}
+        }});
 
-function sendActionToStreamlit(actionStr) {
-    let targetInput = null;
-    const inputs = parentDoc.querySelectorAll('input');
-    inputs.forEach(el => {
-        if(el.getAttribute('aria-label') === 'js_data_exchange' || (el.id && el.id.includes('js_data_input'))) {
-            targetInput = el;
-        }
-    });
+        if(targetInput) {{
+            targetInput.focus();
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            nativeInputValueSetter.call(targetInput, actionStr + '&ts=' + Date.now());
+            targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            targetInput.blur();
+        }}
+    }};
 
-    if(targetInput) {
-        targetInput.focus();
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        nativeInputValueSetter.call(targetInput, actionStr + '&ts=' + Date.now());
-        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-        targetInput.blur();
-    }
-}
-
-// Global styles injection (forced update)
-let existingStyle = parentDoc.getElementById('injected-global-styles');
-if (existingStyle) existingStyle.remove();
-const style = parentDoc.createElement('style');
-style.id = 'injected-global-styles';
-        /* BRUTE FORCE WIDGET OVERRIDE */
-        [data-baseweb="popover"] *, 
-        [data-baseweb="calendar"] *,
-        [data-baseweb="menu"] *,
-        [role="listbox"] *,
-        [role="dialog"] * {
-            background-color: #1c1c1e !important;
-            color: white !important;
-            border-color: rgba(49, 213, 242, 0.2) !important;
-        }
-
-        /* Specific fixes for selected items to keep them visible */
-        [aria-selected="true"], 
-        [aria-selected="true"] *,
-        [data-baseweb="option"]:hover,
-        [data-baseweb="option"]:hover * {
-            background-color: #31d5f2 !important;
-            color: black !important;
-        }
-
-        /* Transparent overrides for inner grid elements to avoid white blocks */
-        [role="gridcell"], [role="gridcell"] * {
-            background-color: transparent !important;
-        }
+    // 2. Global Click & Drag Listeners
+    if (!doc.body.hasAttribute('data-bridge-active')) {{
+        doc.body.setAttribute('data-bridge-active', 'true');
         
-        [aria-selected="true"] {
-            background-color: #31d5f2 !important;
-        }
-
-        /* Month navigation arrows */
-        [data-baseweb="calendar"] svg {
-            fill: #31d5f2 !important;
-            background: transparent !important;
-        }
-    `;
-    parentDoc.head.appendChild(style);
-}
-
-// Relentless Observer to fix dynamic elements
-const observer = new MutationObserver((mutations) => {
-    const popovers = parentDoc.querySelectorAll('[data-baseweb="popover"]');
-    popovers.forEach(popover => {
-        popover.style.backgroundColor = '#1c1c1e';
-        const all = popover.querySelectorAll('*');
-        all.forEach(el => {
-            if (el.getAttribute('aria-selected') === 'true') {
-                el.style.backgroundColor = '#31d5f2';
-                el.style.color = 'black';
-            } else if (el.tagName !== 'SVG' && el.tagName !== 'path') {
-                // Only set background if not selected
-                const style = window.getComputedStyle(el);
-                if (style.backgroundColor !== 'rgb(49, 213, 242)') {
-                     el.style.backgroundColor = '#1c1c1e';
-                }
-            }
-        });
-    });
-});
-observer.observe(parentDoc.body, { childList: true, subtree: true });
-
-if (!parentDoc.getElementById('injected-global-script')) {
-    const s = parentDoc.createElement('script');
-    s.id = 'injected-global-script';
-    s.innerHTML = `
-        if (!document.head.querySelector('#dd-touch')) {
-            const touchScript = document.createElement('script');
-            touchScript.id = 'dd-touch';
-            touchScript.src = 'https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js';
-            document.head.appendChild(touchScript);
-        }
-
-        if (!parentDoc.body.hasAttribute('data-drag-bound')) {
-            parentDoc.body.setAttribute('data-drag-bound', 'true');
-            
-            parentDoc.body.addEventListener('click', (e) => {
-                const actionEl = e.target.closest('[data-action]');
-                if (actionEl) {
-                    e.preventDefault(); e.stopPropagation();
-                    sendActionToStreamlit(actionEl.getAttribute('data-action'));
-                    return;
-                }
-                const stopEl = e.target.closest('[data-action-stop]');
-                if (stopEl) {
-                    e.stopPropagation(); 
-                    const action = stopEl.getAttribute('data-action-stop');
-                    if (action && action !== "true") {
-                        e.preventDefault();
-                        sendActionToStreamlit(action);
-                    }
-                    return;
-                }
-            });
-            
-            parentDoc.body.addEventListener('dragstart', (e) => {
-                const el = e.target.closest('[data-drag-id]');
-                if (el) {
-                    e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id'));
-                    el.style.opacity = '0.4';
-                }
-            });
-            parentDoc.body.addEventListener('dragend', (e) => {
-                const el = e.target.closest('[data-drag-id]');
-                if (el) el.style.opacity = '1';
-            });
-            parentDoc.body.addEventListener('dragover', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
-            });
-            parentDoc.body.addEventListener('dragleave', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) el.style.background = '';
-            });
-            parentDoc.body.addEventListener('drop', (e) => {
-                const el = e.target.closest('[data-drop-zone]');
-                if (el) {
+        doc.body.addEventListener('click', (e) => {{
+            const actionEl = e.target.closest('[data-action]');
+            if (actionEl) {{
+                e.preventDefault(); e.stopPropagation();
+                window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+            }}
+            const stopEl = e.target.closest('[data-action-stop]');
+            if (stopEl) {{
+                e.stopPropagation(); 
+                const action = stopEl.getAttribute('data-action-stop');
+                if (action && action !== 'true') {{
                     e.preventDefault();
-                    el.style.background = '';
-                    const data = e.dataTransfer.getData('text/plain');
-                    if(data) {
-                        const parts = data.split(',');
-                        if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
-                            sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
-                        }
-                    }
-                }
-            });
-        }
-    `;
-    parentDoc.body.appendChild(s);
-}
+                    window.sendActionToStreamlit(action);
+                }}
+            }}
+        }});
+        
+        // Drag & Drop
+        doc.body.addEventListener('dragstart', (e) => {{
+            const el = e.target.closest('[data-drag-id]');
+            if (el) {{ e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id')); el.style.opacity = '0.4'; }}
+        }});
+        doc.body.addEventListener('dragend', (e) => {{
+            const el = e.target.closest('[data-drag-id]');
+            if (el) el.style.opacity = '1';
+        }});
+        doc.body.addEventListener('dragover', (e) => {{
+            const el = e.target.closest('[data-drop-zone]');
+            if (el) {{ e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }}
+        }});
+        doc.body.addEventListener('dragleave', (e) => {{
+            const el = e.target.closest('[data-drop-zone]');
+            if (el) el.style.background = '';
+        }});
+        doc.body.addEventListener('drop', (e) => {{
+            const el = e.target.closest('[data-drop-zone]');
+            if (el) {{
+                e.preventDefault(); el.style.background = '';
+                const data = e.dataTransfer.getData('text/plain');
+                if(data) {{
+                    const parts = data.split(',');
+                    if(parts[0] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {{
+                        window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+                    }}
+                }}
+            }}
+        }});
+    }}
 
-parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
-</script>
+    // 3. Theme Observer (Continuous protection)
+    if (!window.themeObserverActive) {{
+        window.themeObserverActive = true;
+        const observer = new MutationObserver(() => {{
+            const popovers = doc.querySelectorAll('[data-baseweb=\"popover\"]');
+            popovers.forEach(popover => {{
+                popover.style.backgroundColor = '#1c1c1e';
+                popover.querySelectorAll('*').forEach(el => {{
+                    if (el.getAttribute('aria-selected') === 'true') {{
+                        el.style.backgroundColor = '#31d5f2';
+                        el.style.color = 'black';
+                    }} else if (el.tagName !== 'SVG' && el.tagName !== 'path') {{
+                        const bg = window.getComputedStyle(el).backgroundColor;
+                        if (bg !== 'rgb(49, 213, 242)') el.style.backgroundColor = '#1c1c1e';
+                    }}
+                }});
+            }});
+        }});
+        observer.observe(doc.body, {{ childList: true, subtree: true }});
+    }}
+">
 """
-components.html(js_bridge, height=1, width=1)
+st.markdown(bridge_html, unsafe_allow_html=True)
 
 # --- State Initialization ---
 if "authenticated" not in st.session_state:
