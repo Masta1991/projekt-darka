@@ -614,7 +614,7 @@ if (!parentDoc.getElementById('injected-global-script')) {
 parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
 </script>
 """
-st.markdown(js_bridge, unsafe_allow_html=True)
+components.html(js_bridge, height=1, width=1)
 
 # --- State Initialization ---
 if "authenticated" not in st.session_state:
