@@ -976,7 +976,22 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # 3. Kalendarz zapisów - Render first on Mobile
+        # 1. Desktop Buttons at TOP
+        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
+        with col_hdr1:
+            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+        with col_hdr_v:
+            v_col1, v_col2 = st.columns(2)
+            if v_col1.button("📱 DZIEŃ", key="d_v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "dzień"; st.rerun()
+            if v_col2.button("📅 TYDZIEŃ", key="d_v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "tydzień"; st.rerun()
+        with col_hdr2:
+            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="d_v_edit_btn", on_click=toggle_edit, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # 2. Kalendarz zapisów
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             all_days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
@@ -1032,14 +1047,7 @@ with col_main:
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
 
-        # Buttons Logic: 
-        # TOP Buttons for Desktop
-        st.markdown('<div class="desktop-only" style="position: absolute; top: -60px; right: 0; width: 100%;">', unsafe_allow_html=True)
-        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
-        # ... repeat logic but hidden on mobile ...
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # BOTTOM Buttons for Mobile
+        # 3. Mobile Buttons at BOTTOM
         st.markdown('<div class="mobile-only" style="margin-top: 20px;">', unsafe_allow_html=True)
         col_m_hdr_v, col_m_hdr2 = st.columns([2, 1])
         with col_m_hdr_v:
