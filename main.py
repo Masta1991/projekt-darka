@@ -794,7 +794,7 @@ with col_main:
         
         # --- Exercise List Function ---
         def render_exercise_section(part_name, exercises_dict):
-            if not part_name or part_name == "NONE": return
+            if not part_name: return
             exercises = exercises_dict.get(part_name, [])[:5] 
             for i, ex in enumerate(exercises):
                 is_sel = ex in st.session_state.add_data_exercises
@@ -825,10 +825,10 @@ with col_main:
                 st.markdown(html, unsafe_allow_html=True)
 
         with c1:
-            main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI", "NONE"], index=0)
+            main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI", ""], index=0)
             render_exercise_section(main_p, EXERCISES_DATA)
         with c2:
-            extra_p = st.selectbox("Partia Uzupełniająca", ["TRICEPS", "BICEPS", "BRZUCH", "CARDIO", "NONE"], index=0)
+            extra_p = st.selectbox("Partia Uzupełniająca", ["TRICEPS", "BICEPS", "BRZUCH", "CARDIO", ""], index=0)
             render_exercise_section(extra_p, EXERCISES_DATA)
         
         st.divider()
