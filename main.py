@@ -446,20 +446,24 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
                 st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
                 st.rerun()
     except: pass
-                st.session_state.dh.update_calendar_event(f_date, f_h, val['name'], val['type'], 'deleted')
-                st.session_state.dh.update_calendar_event(t_date, t_h, val['name'], val['type'], 'active')
-        elif action == "sync_weight":
-            ex = parts.get("ex")
-            val = float(parts.get("val", 0))
-            st.session_state.add_data_exercises[ex] = val
-        elif action == "toggle_ex":
-            ex = parts.get("ex")
-            status = parts.get("status")
-            val = float(parts.get("val", 0))
-            if status == "add":
+    
+    if js_data:
+        try:
+            parts = dict(p.split('=') for p in js_data.split('&'))
+            action = parts.get('action')
+            if action == "sync_weight":
+                ex = parts.get("ex")
+                val = float(parts.get("val", 0))
                 st.session_state.add_data_exercises[ex] = val
-            else:
-                st.session_state.add_data_exercises.pop(ex, None)
+            elif action == "toggle_ex":
+                ex = parts.get("ex")
+                status = parts.get("status")
+                val = float(parts.get("val", 0))
+                if status == "add":
+                    st.session_state.add_data_exercises[ex] = val
+                else:
+                    st.session_state.add_data_exercises.pop(ex, None)
+        except: pass
         elif action == "prev_month":
             st.session_state.mini_cal_date = st.session_state.mini_cal_date - relativedelta(months=1)
         elif action == "next_month":
