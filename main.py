@@ -55,9 +55,9 @@ def check_password():
     st.markdown("""
     <style>
         .block-container { padding-top: 3rem !important; }
-        .stTextInput > div { min-height: 130px !important; }
-        .stTextInput > div > div { min-height: 130px !important; border-radius: 16px !important; }
-        .stTextInput > div > div > input {
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div { min-height: 130px !important; }
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div > div { min-height: 130px !important; border-radius: 16px !important; }
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div > div > input {
             background-color: #0d1117 !important; color: white !important;
             border: 3px solid #31d5f2 !important; border-radius: 16px !important;
             text-align: center !important; font-size: 48px !important;
@@ -101,6 +101,14 @@ def local_css():
     [data-testid="stSidebar"] { display: none; }
     header { visibility: hidden; }
     .block-container { padding-top: 1.5rem !important; max-width: 98% !important; }
+    
+    /* Hide JS Bridge Input completely but keep it focusable */
+    div[data-testid="stTextInput"]:has(input[aria-label="js_data_exchange"]) {
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
 
     /* Layout */
     .main-layout { display: flex; gap: 30px; }
