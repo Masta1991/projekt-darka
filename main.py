@@ -228,16 +228,27 @@ def local_css():
         margin-bottom: 20px !important;
     }
 
-    /* Dropdown Menu Styling */
-    ul[data-baseweb="menu"] {
+    /* Dropdown Menu & Popover Styling (Aggressive Fix) */
+    div[data-baseweb="popover"], 
+    div[data-baseweb="menu"],
+    ul[data-baseweb="menu"],
+    [role="listbox"] {
         background-color: #1c1c1e !important;
+        background: #1c1c1e !important;
         border: 1px solid rgba(49, 213, 242, 0.3) !important;
+        color: white !important;
     }
-    li[data-baseweb="option"] {
+    
+    li[data-baseweb="option"],
+    [role="option"] {
+        background-color: #1c1c1e !important;
         color: #ffffff !important;
         transition: background 0.2s;
     }
-    li[data-baseweb="option"]:hover {
+    
+    li[data-baseweb="option"]:hover,
+    [role="option"]:hover,
+    li[aria-selected="true"] {
         background-color: rgba(49, 213, 242, 0.1) !important;
         color: #31d5f2 !important;
     }
