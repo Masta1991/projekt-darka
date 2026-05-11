@@ -84,20 +84,24 @@ class DataHandler:
         ws = self.get_worksheet("Treningi")
         if ws:
             try:
-                # Optimized fetch: get all and filter locally to avoid multiple API calls
-                data = ws.get_all_records()
+                # get_all_values is safer for sheets with non-ascii headers
+                all_values = ws.get_all_values()
+                if not all_values or len(all_values) < 2:
+                    return {}
+                
                 results = {}
-                for row in data:
-                    # Match by client and date prefix of timestamp
-                    row_client = str(row.get('Klient', ''))
-                    row_ts = str(row.get('Timestamp', ''))
+                # row structure: [0:Timestamp, 1:Klient, 2:Ćwiczenie, 3:Obciążenie, 4:Tydzień]
+                for row in all_values[1:]:
+                    if len(row) < 4: continue
+                    
+                    row_ts = str(row[0])
+                    row_client = str(row[1])
+                    
                     if row_client == str(client) and row_ts.startswith(date_str):
-                        # Try different possible keys for Exercise and Weight (due to encoding/naming)
-                        ex_name = row.get('Ćwiczenie') or row.get('wiczenie')
-                        
-                        raw_weight = row.get('Obciążenie') or row.get('Obcienie') or row.get('Ciężar') or '0'
+                        ex_name = str(row[2])
                         try:
-                            weight = float(str(raw_weight).replace(',', '.'))
+                            weight_str = str(row[3]).replace(',', '.')
+                            weight = float(weight_str)
                         except:
                             weight = 0.0
                         
