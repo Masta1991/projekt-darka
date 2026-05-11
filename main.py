@@ -245,8 +245,9 @@ def get_img(name):
 
 def bento_tile(label, title, desc, img, page_name):
     img_b64 = get_img(img)
+    active_border = "border-color: #31d5f2; background: #252528;" if st.session_state.page == page_name else ""
     st.markdown(f"""
-        <a href="/?page={page_name}" target="_self" class="tile-link">
+        <a class="tile-link" style="{active_border}" data-action="action=nav&page={page_name}">
             <img src="data:image/png;base64,{img_b64}" class="tile-img">
             <div class="tile-overlay"></div>
             <div class="tile-content">
@@ -265,7 +266,7 @@ def get_pl_date(d):
 # --- State ---
 @st.cache_resource
 def get_global_schedule():
-    clients_pool = ["Maciej Stawski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
+    clients_pool = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
     exercises = ["Nogi", "Klatka piersiowa", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
     data = {}
     for d in range(6):
@@ -313,6 +314,9 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         elif action == "select_date":
             st.session_state.selected_date = datetime.date(int(parts.get("y")), int(parts.get("m")), int(parts.get("d")))
             st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
+        elif action == "nav":
+            page = parts.get('page', 'home')
+            st.session_state.page = page
     except Exception as e:
         print(f"Action error: {e}")
     st.rerun()
@@ -423,31 +427,31 @@ with col_main:
         # --- Exercise Data ---
         EXERCISES_DATA = {
             "KLATKA PIERSIOWA": [
-                "Wyciskanie sztangi poziomo", "Wyciskanie hantli skos +", 
-                "Rozpiętki", "Dipsy (klatka)", "Krzyżowanie linek"
+                "Wyciskanie sztangi na ławce poziomej", "Wyciskanie hantli na ławce skośnej dodatniej",
+                "Rozpiętki z hantlami lub na maszynie", "Pompki na poręczach (dipsy)", "Krzyżowanie linek wyciągu"
             ],
             "PLECY": [
-                "Podciąganie na drążku", "Martwy ciąg (Deadlift)", 
-                "Wiosłowanie sztangą", "Ściąganie drążka", "Przyciąganie dolne"
+                "Podciąganie na drążku", "Martwy ciąg (Deadlift)",
+                "Wiosłowanie sztangą w opadzie", "Ściąganie drążka wyciągu górnego", "Przyciąganie uchwytu wyciągu dolnego"
             ],
             "NOGI": [
-                "Przysiady (Back Squat)", "Leg Press", "Wykroki", 
-                "RDL (Martwy ciąg prosty)", "Uginanie leżąc"
+                "Przysiady ze sztangą (Back Squat)", "Wypychanie na suwnicy (Leg Press)", "Wykroki z hantlami",
+                "Martwy ciąg na prostych nogach (RDL)", "Uginanie nóg na maszynie leżąc"
             ],
             "BARKI": [
-                "Overhead Press", "Wznosy bokiem", "Wyciskanie hantli", 
-                "Wznosy w opadzie", "Podciąganie sztangi"
+                "Wyciskanie żołnierskie (Overhead Press)", "Wznosy hantli bokiem", "Wyciskanie hantli nad głowę",
+                "Wznosy w opadzie (tylni akton)", "Podciąganie sztangi wzdłuż tułowia"
             ],
             "TRICEPS": [
-                "Wyciskanie wąsko", "Prostowanie linki", 
-                "Skullcrushers", "Dipsy pionowo", "Francuskie hantlem"
+                "Wyciskanie w wąskim chwycie", "Prostowanie ramion z linkami",
+                "Francuskie (Skullcrushers)", "Dipsy pionowo", "Prostowanie z hantlem nad głową"
             ],
             "BICEPS": [
-                "Uginanie sztanga", "Uginanie z suplinacją", 
+                "Uginanie ramion ze sztangą", "Uginanie z rotacją (suplinacją)",
                 "Modlitewnik", "Uginanie młotkowe", "Podciąganie podchwytem"
             ],
             "BRZUCH": [
-                "Unoszenie nóg", "Allahy", "Plank", "Deadbug", "Russian Twist"
+                "Unoszenie nóg w zwisie", "Allahy (skłony z linką)", "Plank (deska)", "Deadbug", "Russian Twist"
             ],
             "CARDIO": [
                 "Bieżnia", "Rowerek", "Orbitek", "Schody", "Wioślarz"
@@ -468,7 +472,7 @@ with col_main:
         # --- Top Navigation / Selection ---
         col_c, col_t = st.columns([2, 1])
         with col_c:
-            klient = st.selectbox("Podopieczny", ["Maciej Stawski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"], index=0)
+            klient = st.selectbox("Podopieczny", ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"], index=0)
         with col_t:
             st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{["Pon", "Wt", "Śr", "Czw", "Pt", "Sob"][q_day]}, {q_hour}:00</div>', unsafe_allow_html=True)
 
