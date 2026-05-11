@@ -454,6 +454,86 @@ def local_css():
 
 local_css()
 
+def draw_calendar_widget():
+    # --- KONFIGURACJA DATY ---
+    today = st.session_state.selected_date
+    current_view = st.session_state.mini_cal_date
+    dni_tygodnia = ['P', 'W', 'Ś', 'C', 'P', 'S', 'N']
+    miesiace = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
+    
+    rok = current_view.year
+    miesiac_idx = current_view.month
+    dzien_dzis = today.day if today.month == current_view.month and today.year == current_view.year else -1
+    nazwa_miesiaca = miesiace[miesiac_idx - 1]
+    
+    d_str_today = today.strftime("%Y-%m-%d")
+    day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == d_str_today and v['status'] == 'active']
+    dzien_tygodnia_str = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"][today.weekday()]
+
+    # --- CSS DLA STYLIZACJI ---
+    st.markdown("""
+    <style>
+        .cal-container {
+            background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(49, 213, 242, 0.3);
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 25px;
+        }
+        .cal-header-top { color: #31d5f2; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 8px; text-transform: uppercase; }
+        .cal-header-date { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+        .cal-header-status { color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; }
+        .stat-highlight { color: #31d5f2; font-weight: 800; }
+        .cal-month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 600; font-size: 13px; color: #8b949e; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .cal-day-name { color: #8b949e; font-size: 0.75rem; padding-bottom: 8px; font-weight: 600; }
+        .cal-day { font-size: 0.85rem; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; transition: all 0.2s; }
+        .cal-day:hover { background: rgba(255,255,255,0.05); }
+        .cal-day.today-circle { background-color: #31d5f2 !important; color: #0d1117 !important; font-weight: 800; box-shadow: 0 0 10px rgba(49, 213, 242, 0.4); }
+        .cal-day.other-month { color: #333; }
+        .nav-arrows span { cursor: pointer; padding: 0 5px; transition: color 0.2s; }
+        .nav-arrows span:hover { color: #31d5f2; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # --- LOGIKA GENEROWANIA DNI ---
+    cal_obj = calendar.Calendar(firstweekday=0)
+    month_days = cal_obj.monthdayscalendar(rok, miesiac_idx)
+
+    html_days = ""
+    for week in month_days:
+        for day in week:
+            if day == 0:
+                html_days += '<div class="cal-day other-month"></div>'
+            else:
+                is_today_cls = "today-circle" if day == dzien_dzis else ""
+                html_days += f'<div class="cal-day {is_today_cls}" data-action="action=select_date&y={rok}&m={miesiac_idx}&d={day}">{day}</div>'
+
+    # --- RENDEROWANIE ---
+    st.markdown(f"""
+    <div class="cal-container">
+        <div class="cal-header-top">DOWODZENIE</div>
+        <div class="cal-header-date">{dzien_tygodnia_str}, {today.day} {nazwa_miesiaca.lower()}</div>
+        <div class="cal-header-status">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+        
+        <div class="cal-month-nav">
+            <span>{rok} {nazwa_miesiaca}</span>
+            <div class="nav-arrows">
+                <span data-action="action=prev_month">↑</span>
+                <span data-action="action=next_month">↓</span>
+            </div>
+        </div>
+        
+        <div class="cal-grid">
+            {" ".join([f'<div class="cal-day-name">{d}</div>' for d in dni_tygodnia])}
+            {html_days}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # --- Actions via Hidden Input (CONSOLIDATED) ---
 js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibility="collapsed")
 
@@ -737,30 +817,7 @@ st.markdown('<div class="main-layout">', unsafe_allow_html=True)
 col_side, col_main = st.columns([1, 4])
 
 with col_side:
-    sel_date = st.session_state.selected_date
-    d_str_today = sel_date.strftime("%Y-%m-%d")
-    day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == d_str_today and v['status'] == 'active']
-    
-    # Square Dowodzenie Panel with Permanent Calendar
-    c = calendar.Calendar(firstweekday=0)
-    month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
-    months_pl = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
-    month_str = f"{st.session_state.mini_cal_date.year} {months_pl[st.session_state.mini_cal_date.month-1]}"
-    
-    grid_html = ""
-    for d_l in ["P", "W", "Ś", "C", "P", "S", "N"]: grid_html += f'<div style="color: #8b949e;">{d_l}</div>'
-    
-    for week in month_cal:
-        for d_o in week:
-            is_current_month = d_o.month == st.session_state.mini_cal_date.month
-            is_selected = d_o == sel_date
-            color = "#444" if not is_current_month else "white"
-            style = f"color: {color}; cursor: pointer; border-radius: 50%; width: 20px; height: 20px; line-height: 20px; margin: 0 auto;"
-            if is_selected: style += " background: #31d5f2; color: #0d1117; font-weight: 800; box-shadow: 0 0 8px rgba(49,213,242,0.5);"
-            grid_html += f'<span data-action="action=select_date&y={d_o.year}&m={d_o.month}&d={d_o.day}" style="display:inline-block; {style}">{d_o.day}</span>'
-
-    dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
-    st.markdown(dowodzenie_html, unsafe_allow_html=True)
+    draw_calendar_widget()
 
     bento_tile("ADMINISTRACJA", "Dodaj dane", "Treningi i pomiary", "tile_add_data_1778074195381.png", "add_data")
     bento_tile("ANALITYKA", "Wyniki", "Wykresy postępów", "tile_dashboard_1778074214113.png", "dashboard")
