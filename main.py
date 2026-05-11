@@ -27,7 +27,8 @@ function sendActionToStreamlit(actionStr) {
     if(input) {
         input.focus();
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        const width = window.innerWidth;
+        // MUST use window.parent.innerWidth to get the actual screen size!
+        const width = window.parent.innerWidth || window.innerWidth;
         nativeInputValueSetter.call(input, actionStr + '&w=' + width + '&ts=' + Date.now());
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
