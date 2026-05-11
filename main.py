@@ -216,32 +216,67 @@ if (!parentDoc.getElementById('injected-global-script')) {
     const s = parentDoc.createElement('script');
     s.id = 'injected-global-script';
     s.innerHTML = `
-        // Safe localStorage check for auto-login
-        function checkAutoLogin() {
-            try {
-                // Try parent localStorage first, then fallback to local
-                const storage = window.localStorage || (window.parent && window.parent.localStorage);
-                const authTs = storage.getItem('trainer_auth_ts');
-                if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-                    if (!window.location.search.includes('auto_auth=1')) {
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.set('auto_auth', '1');
-                        window.location.href = newUrl.toString();
-                    }
-                }
-            } catch (e) {
-                console.log('Storage access denied, falling back to local');
-                const localTs = window.localStorage.getItem('trainer_auth_ts');
-                if (localTs && (Date.now() - parseInt(localTs)) < 14400000) {
-                     if (!window.location.search.includes('auto_auth=1')) {
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.set('auto_auth', '1');
-                        window.location.href = newUrl.toString();
-                    }
-                }
-            }
+        if (!document.head.querySelector('#dd-touch')) {
+            const touchScript = document.createElement('script');
+            touchScript.id = 'dd-touch';
+            touchScript.src = 'https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js';
+            document.head.appendChild(touchScript);
         }
-        checkAutoLogin();
+
+        if (!document.body.hasAttribute('data-drag-bound')) {
+            document.body.setAttribute('data-drag-bound', 'true');
+            
+            document.body.addEventListener('click', (e) => {
+                const stopEl = e.target.closest('[data-action-stop]');
+                if (stopEl) {
+                    e.stopPropagation(); e.preventDefault();
+                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
+                    return;
+                }
+                const actionEl = e.target.closest('[data-action]');
+                if (actionEl) {
+                    e.preventDefault();
+                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                }
+            });
+            
+            document.body.addEventListener('dragstart', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) {
+                    e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id'));
+                    el.style.opacity = '0.4';
+                }
+            });
+            document.body.addEventListener('dragend', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) el.style.opacity = '1';
+            });
+            document.body.addEventListener('dragover', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
+            });
+            document.body.addEventListener('dragleave', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) el.style.background = '';
+            });
+            document.body.addEventListener('drop', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) {
+                    e.preventDefault();
+                    el.style.background = '';
+                    const data = e.dataTransfer.getData('text/plain');
+                    if(data) {
+                        const parts = data.split(',');
+                        if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
+                            window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+                        }
+                    }
+                }
+            });
+        }
+    `;
+    parentDoc.body.appendChild(s);
+}
 
         if (!document.head.querySelector('#dd-touch')) {
             const touchScript = document.createElement('script');
@@ -322,12 +357,15 @@ def check_password():
             st.rerun()
         return True
 
-    # Check auto_auth query param (set by JS bridge)
-    if st.query_params.get("auto_auth") == "1":
-        st.session_state.authenticated = True
-        st.session_state.login_ts = time.time()
-        st.query_params.clear()
-        st.rerun()
+    # Check localStorage for valid session via Bridge (Safe for Cloud)
+    components.html("""
+    <script>
+    const authTs = window.localStorage.getItem('trainer_auth_ts');
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+        window.parent.defaultView.sendActionToStreamlit('action=auto_login');
+    }
+    </script>
+    """, height=0)
 
     def password_entered():
         access_code = st.secrets.get("access_code", "170491")
@@ -368,7 +406,7 @@ if not check_password():
 # Save login to localStorage
 if st.session_state.get('save_login'):
     st.session_state.save_login = False
-    components.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString()); try { window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString()); } catch(e) {}</script>', height=0)
+    components.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
 # --- Navigation & Page Persistence ---
 if "page" not in st.session_state:
@@ -637,7 +675,11 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
     try:
         parts = dict(p.split('=') for p in js_data.split('&'))
         action = parts.get('action')
-        if action == "delete":
+        if action == "auto_login":
+            st.session_state.authenticated = True
+            st.session_state.login_ts = time.time()
+            st.rerun()
+        elif action == "delete":
             d_p, h_p = int(parts.get("d", -1)), int(parts.get("h", -1))
             if (d_p, h_p) in st.session_state.schedule_data: st.session_state.schedule_data[(d_p, h_p)]['status'] = 'deleted'
         elif action == "move":
