@@ -17,10 +17,10 @@ class DataHandler:
             # Try Streamlit Secrets (for Cloud deployment)
             creds_dict = None
             try:
-                if "gcp_service_account" in st.secrets:
-                    creds_dict = st.secrets["gcp_service_account"]
+                # Avoid using 'in st.secrets' as it can cause KeyError in some environments
+                creds_dict = st.secrets.get("gcp_service_account")
             except Exception:
-                pass
+                creds_dict = None
 
             if creds_dict:
                 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
