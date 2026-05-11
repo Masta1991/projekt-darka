@@ -12,6 +12,55 @@ import streamlit.components.v1 as components
 # --- Page Config ---
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# --- Authentication ---
+def check_password():
+    if st.session_state.get('authenticated'):
+        return True
+
+    def password_entered():
+        try:
+            access_code = st.secrets.get("access_code", "170491")
+        except:
+            access_code = "170491"
+        if st.session_state["password"] == access_code:
+            st.session_state.authenticated = True
+            del st.session_state["password"]
+            st.rerun()
+        else:
+            st.error("❌ Błędny kod dostępu")
+
+    st.markdown("""
+    <style>
+        .block-container { padding-top: 3rem !important; }
+        .stTextInput > div { min-height: 130px !important; }
+        .stTextInput > div > div { min-height: 130px !important; border-radius: 16px !important; }
+        .stTextInput > div > div > input {
+            background-color: #0d1117 !important; color: white !important;
+            border: 3px solid #31d5f2 !important; border-radius: 16px !important;
+            text-align: center !important; font-size: 48px !important;
+            letter-spacing: 18px !important; min-height: 130px !important;
+            padding: 40px 16px !important; caret-color: #31d5f2 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div style="text-align:center; margin-top:60px;"><h1 style="font-size:60px; font-weight:900; background: linear-gradient(135deg, #31d5f2, #2196F3); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">TRAINER PRO</h1><p style="color: #8b949e; font-size:14px;">Wprowadź kod dostępu</p></div>', unsafe_allow_html=True)
+
+    st.text_input("Kod", type="password", key="password", on_change=password_entered, label_visibility="collapsed")
+
+    st.markdown('<div style="text-align:center; margin-top:20px;">', unsafe_allow_html=True)
+    st.button("🔐 ZALOGUJ", on_click=password_entered, use_container_width=True, type="primary")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<p style="text-align:center; color:#444; margin-top:40px; font-size:12px;">© 2026 Trainer Pro Dashboard</p>', unsafe_allow_html=True)
+    return False
+
+if not check_password():
+    st.stop()
+
 # --- Navigation Logic ---
 if "page" in st.query_params:
     st.session_state.page = st.query_params["page"]
@@ -216,8 +265,8 @@ def get_pl_date(d):
 # --- State ---
 @st.cache_resource
 def get_global_schedule():
-    clients_pool = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
-    exercises = ["Nogi", "Klatka", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
+    clients_pool = ["Maciej Stawski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
+    exercises = ["Nogi", "Klatka piersiowa", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
     data = {}
     for d in range(6):
         for h in [7, 8, 10, 11, 17, 18, 19]:
@@ -233,6 +282,7 @@ if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'selected_date' not in st.session_state: st.session_state.selected_date = datetime.date.today()
 if 'mini_cal_date' not in st.session_state: st.session_state.mini_cal_date = datetime.date.today().replace(day=1)
 if 'selected_week' not in st.session_state: st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
+if 'calendar_view' not in st.session_state: st.session_state.calendar_view = 'tydzień'
 
 if st.query_params.get("edit_mode") == "1":
     st.session_state.edit_mode = True
@@ -305,25 +355,43 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        col_hdr1, col_hdr2 = st.columns([4, 1])
+        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
+        with col_hdr_v:
+            v_col1, v_col2 = st.columns(2)
+            if v_col1.button("📱 DZIEŃ", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "dzień"; st.rerun()
+            if v_col2.button("📅 TYDZIEŃ", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
+                st.session_state.calendar_view = "tydzień"; st.rerun()
         with col_hdr2:
-            st.button("✅ KONIEC EDYCJI" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
+            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", on_click=toggle_edit, use_container_width=True)
 
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             full_html = f'<div class="calendar-wrapper {edit_cls}">'
-            days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
-            full_html += '<div class="calendar-grid-header"><div class="day-header"></div>'
-            for i, d_name in enumerate(days): 
+            all_days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
+            
+            if st.session_state.calendar_view == "dzień":
+                show_days = [sel_date.weekday()] if sel_date.weekday() < 6 else [0]
+                cols_css = "grid-template-columns: 60px 1fr;"
+            else:
+                show_days = list(range(6))
+                cols_css = "grid-template-columns: 60px repeat(6, 1fr);"
+            
+            # Calculate dates for the selected week
+            week_start = sel_date - datetime.timedelta(days=sel_date.weekday())
+            
+            full_html += f'<div class="calendar-grid-header" style="{cols_css}"><div class="day-header"></div>'
+            for i in show_days:
                 today_cls = "today" if i == sel_date.weekday() else ""
-                full_html += f'<div class="day-header {today_cls}">{d_name}</div>'
+                day_date = week_start + datetime.timedelta(days=i)
+                full_html += f'<div class="day-header {today_cls}">{all_days[i]}<br><span style="font-size:10px; color:#555;">{day_date.day}.{day_date.month}</span></div>'
             full_html += '</div>'
             
             for h in range(6, 22):
-                full_html += f'<div class="calendar-row"><div class="time-col">{h}:00</div>'
-                for d in range(6):
+                full_html += f'<div class="calendar-row" style="{cols_css}"><div class="time-col">{h}:00</div>'
+                for d in show_days:
                     key = (d, h)
                     event = st.session_state.schedule_data.get(key)
                     cell_content = ""
@@ -400,7 +468,7 @@ with col_main:
         # --- Top Navigation / Selection ---
         col_c, col_t = st.columns([2, 1])
         with col_c:
-            klient = st.selectbox("Podopieczny", ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"], index=0)
+            klient = st.selectbox("Podopieczny", ["Maciej Stawski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"], index=0)
         with col_t:
             st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{["Pon", "Wt", "Śr", "Czw", "Pt", "Sob"][q_day]}, {q_hour}:00</div>', unsafe_allow_html=True)
 
