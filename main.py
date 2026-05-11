@@ -1,6 +1,5 @@
 import streamlit as st
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
-st.error("!!! UWAGA: KOD ZOSTAŁ ZAKTUALIZOWANY - JEŚLI TO WIDZISZ, ZMIANY DZIAŁAJĄ !!!")
 import pandas as pd
 import datetime
 import base64
@@ -324,43 +323,34 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* Date Picker Calendar Fix (Comprehensive Dark Theme) */
+    /* Date Picker Ultimate Fix */
     div[data-baseweb="calendar"],
     div[data-baseweb="calendar"] header,
-    div[data-baseweb="calendar"] div[role="grid"],
-    div[data-baseweb="calendar"] div[role="presentation"],
-    div[data-baseweb="popover"] div[role="dialog"] {
+    div[data-baseweb="calendar"] [role="grid"],
+    div[data-baseweb="calendar"] [role="gridcell"],
+    div[data-baseweb="calendar"] [role="gridcell"] > div {
         background-color: #1c1c1e !important;
         background: #1c1c1e !important;
         color: white !important;
-        border: 1px solid rgba(49, 213, 242, 0.3) !important;
     }
-    
-    /* Target the month/year name and weekday labels (Su, Mo, etc.) */
-    div[data-baseweb="calendar"] [data-baseweb="select"] div,
-    div[data-baseweb="calendar"] header div,
-    div[data-baseweb="calendar"] div[role="grid"] div {
-        color: white !important;
+
+    /* Fix the white boxes specifically */
+    div[data-baseweb="calendar"] [role="gridcell"] > div:not([aria-selected="true"]) {
         background-color: transparent !important;
     }
 
-    /* Fix the white 'day headers' (Su, Mo, Tu...) */
-    div[data-baseweb="calendar"] div[role="grid"] > div:first-child > div {
-        color: #8b949e !important;
-        font-weight: 700 !important;
-    }
-
-    /* Selected Day and Hover States */
-    div[data-baseweb="calendar"] div[aria-selected="true"] > div,
-    div[data-baseweb="calendar"] div[aria-selected="true"] {
+    div[data-baseweb="calendar"] [aria-selected="true"],
+    div[data-baseweb="calendar"] [aria-selected="true"] > div {
         background-color: #31d5f2 !important;
-        color: #000000 !important;
-        border-radius: 50% !important;
+        color: #000 !important;
     }
 
-    div[data-baseweb="calendar"] div[role="gridcell"]:hover {
-        background-color: rgba(49, 213, 242, 0.1) !important;
-        border-radius: 50% !important;
+    div[data-baseweb="calendar"] button {
+        color: white !important;
+    }
+
+    div[data-baseweb="calendar"] svg {
+        fill: #31d5f2 !important;
     }
 
     /* Menu button styles (global) */
