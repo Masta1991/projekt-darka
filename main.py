@@ -76,9 +76,33 @@ class DataHandler:
     def save_workout_result(self, client, exercise, weight, week):
         ws = self.get_worksheet("Treningi")
         if ws:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            ws.append_row([timestamp, client, exercise, weight, week])
-            return True
+            try:
+                today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                # Fetch all to find existing record for update
+                all_values = ws.get_all_values()
+                if all_values:
+                    # columns: 0:Timestamp, 1:Klient, 2:Ćwiczenie, 3:Obciążenie, 4:Tydzień
+                    for i, row in enumerate(all_values[1:], start=2):
+                        if len(row) < 3: continue
+                        row_ts = str(row[0])
+                        row_client = str(row[1])
+                        row_ex = str(row[2])
+                        
+                        # Check match (client + exercise + date)
+                        if row_client == str(client) and row_ex == str(exercise) and today_str in row_ts:
+                            # Update existing row
+                            ws.update_cell(i, 1, timestamp) # Update timestamp to latest
+                            ws.update_cell(i, 4, str(weight).replace('.', ',')) # Update weight
+                            return True
+                
+                # If no existing record found, append new
+                ws.append_row([timestamp, client, exercise, str(weight).replace('.', ','), week])
+                return True
+            except Exception as e:
+                print(f"Save error: {e}")
+                return False
         return False
 
     def fetch_workout_results(self, client, date_str):
