@@ -15,6 +15,31 @@ st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="w
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# --- Auto-login check (MUST run before check_password) ---
+components.html("""
+<script>
+if (!window._autoLoginSent) {
+    window._autoLoginSent = true;
+    const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+        const parentDoc = window.parent.document;
+        const input = parentDoc.querySelector('input[aria-label="js_data_exchange"]');
+        if (input) {
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(input, 'action=auto_login&ts=' + Date.now());
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+}
+</script>
+""", height=0)
+
+# --- Hidden JS data input (for auto-login) ---
+js_data_early = st.text_input("js_data_exchange", label_visibility="collapsed", key="js_data_exchange")
+if js_data_early and 'auto_login' in js_data_early:
+    st.session_state.authenticated = True
+
 # --- Authentication ---
 def check_password():
     if st.session_state.get('authenticated'):
@@ -235,6 +260,13 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .calendar-wrapper { padding: 10px; border-radius: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .calendar-grid-header, .calendar-row { min-width: 600px; }
+        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -300,7 +332,7 @@ def clear_schedule():
     st.session_state.schedule_data = {}
 
 # --- Actions via Hidden Input ---
-js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
+js_data = js_data_early  # Use the input from the top of the file
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
     try:
@@ -647,15 +679,6 @@ if (!parentDoc.getElementById('injected-global-script')) {
         }
     `;
     parentDoc.body.appendChild(s);
-}
-
-// Auto-login check via localStorage
-if (!window._authChecked) {
-    window._authChecked = true;
-    const authTs = parentDoc.defaultView.localStorage.getItem('trainer_auth_ts');
-    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-        sendActionToStreamlit('action=auto_login');
-    }
 }
 
 // Make sendActionToStreamlit available in parent scope
