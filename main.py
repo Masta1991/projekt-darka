@@ -347,6 +347,16 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         elif action == "nav":
             page = parts.get('page', 'home')
             st.session_state.page = page
+        elif action == "open_event":
+            st.session_state.page = "add_data"
+            st.session_state.event_client = parts.get('client', '')
+            st.session_state.event_hour = int(parts.get('hour', 12))
+            st.session_state.event_day = int(parts.get('day', 0))
+        elif action == "add_event":
+            st.session_state.page = "add_data"
+            st.session_state.event_client = ''
+            st.session_state.event_hour = int(parts.get('hour', 12))
+            st.session_state.event_day = int(parts.get('day', 0))
     except Exception as e:
         print(f"Action error: {e}")
     st.rerun()
@@ -435,16 +445,16 @@ with col_main:
                             cell_content = f"""
                                 <div class="event-card" id="event_{d}_{h}" draggable="{drag_str}" data-drag-id="{d},{h}">
                                     <div class="delete-btn" data-action-stop="action=delete&d={d}&h={h}">−</div>
-                                    <a href="/?page=add_data&client={event['name']}&hour={h}&day={d}" target="_self" draggable="false" style="text-decoration:none; color:inherit; display:block; height:100%;">
+                                    <div data-action="action=open_event&client={event['name']}&hour={h}&day={d}" style="cursor:pointer; height:100%;">
                                         <div class="event-name" draggable="false">{event['name']}</div>
                                         <div class="event-type" draggable="false">{event['type']}</div>
-                                    </a>
+                                    </div>
                                 </div>
                             """
                         else:
                             cell_content = f'<div class="deleted-marker"></div><div class="deleted-info"><strong>USUNIĘTO:</strong><br>{event["name"]}<br>{event["type"]}</div>'
                     else:
-                        cell_content = f'<div class="add-btn"><a href="/?page=add_data&hour={h}&day={d}" target="_self" style="color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</a></div>'
+                        cell_content = f'<div class="add-btn" data-action="action=add_event&hour={h}&day={d}" style="cursor:pointer;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">+</div>'
                     
                     full_html += f'<div class="calendar-cell" data-drop-zone="true" data-drop-d="{d}" data-drop-h="{h}">{cell_content}</div>'
                 full_html += '</div>'
@@ -490,21 +500,25 @@ with col_main:
         
         st.markdown('<div class="header-section"><div class="page-title">📝 Rejestracja Treningu</div></div>', unsafe_allow_html=True)
         
-        # Get query params or defaults
-        q_client = st.query_params.get("client", "Jan Kowalski")
-        q_hour = int(st.query_params.get("hour", "12"))
-        q_day = int(st.query_params.get("day", "0"))
+        # Get event data from session state (set by data-action nav)
+        q_client = st.session_state.get("event_client", "Jan Kowalski")
+        q_hour = st.session_state.get("event_hour", 12)
+        q_day = st.session_state.get("event_day", 0)
         
         # Initialization of state for exercises if not exists
         if 'add_data_exercises' not in st.session_state:
-            st.session_state.add_data_exercises = {} # Format: {exercise_name: weight}
+            st.session_state.add_data_exercises = {}
 
         # --- Top Navigation / Selection ---
-        col_c, col_t = st.columns([2, 1])
+        col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
-            klient = st.selectbox("Podopieczny", ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"], index=0)
-        with col_t:
-            st.markdown(f'<div style="text-align: right; color: #8b949e; font-size: 12px; margin-top: 10px;">{["Pon", "Wt", "Śr", "Czw", "Pt", "Sob"][q_day]}, {q_hour}:00</div>', unsafe_allow_html=True)
+            clients = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
+            default_idx = clients.index(q_client) if q_client in clients else 0
+            klient = st.selectbox("Podopieczny", clients, index=default_idx)
+        with col_d:
+            train_date = st.date_input("Data", value=st.session_state.selected_date)
+        with col_h:
+            train_hour = st.selectbox("Godzina", list(range(6, 22)), index=max(0, q_hour - 6))
 
         st.divider()
         c1, c2 = st.columns(2)
@@ -542,7 +556,7 @@ with col_main:
         with f_col1:
             if st.button("⬅️ POWRÓT", use_container_width=True):
                 st.session_state.add_data_exercises = {}
-                st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+                st.session_state.page = "home"; st.rerun()
         with f_col2:
             if st.button("🗑️ WYCZYŚĆ", use_container_width=True):
                 st.session_state.add_data_exercises = {}
@@ -550,9 +564,9 @@ with col_main:
         with f_col3:
             if st.button("✅ ZAPISZ TRENING", type="primary", use_container_width=True):
                 if st.session_state.add_data_exercises:
-                    # Save summary to schedule
                     ex_summary = ", ".join([f"{k} ({v}kg)" for k, v in st.session_state.add_data_exercises.items()])
-                    st.session_state.schedule_data[(q_day, q_hour)] = {
+                    save_day = train_date.weekday()
+                    st.session_state.schedule_data[(save_day, train_hour)] = {
                         'name': klient, 
                         'type': main_part.capitalize(), 
                         'info': ex_summary,
@@ -561,7 +575,7 @@ with col_main:
                     st.success("Zapisano trening!")
                     time.sleep(1)
                     st.session_state.add_data_exercises = {}
-                    st.query_params.clear(); st.session_state.page = "home"; st.rerun()
+                    st.session_state.page = "home"; st.rerun()
                 else:
                     st.error("Wybierz przynajmniej jedno ćwiczenie!")
 
