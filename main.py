@@ -537,9 +537,9 @@ window.parent.sendActionToStreamlit = function(actionStr) {{
 }};
 
 // 4. Listeners (Re-binding with cleanup to prevent stale closures)
-if (window.parent.trainerClickHandler) {
+if (window.parent.trainerClickHandler) {{
     doc.body.removeEventListener('click', window.parent.trainerClickHandler);
-}
+}}
 
 window.parent.trainerClickHandler = (e) => {{
     const btn = e.target.closest('[data-action]');
