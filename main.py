@@ -488,21 +488,19 @@ s.innerHTML = `
 `;
 doc.head.appendChild(s);
 
-// 2. Continuous Theme Observer
-if (!window.parent.observerActive) {{
-    window.parent.observerActive = true;
-    const observer = new MutationObserver(() => {{
-        const cells = doc.querySelectorAll('[role="gridcell"] > div');
-        cells.forEach(c => {{
-            if (!c.getAttribute('aria-selected')) c.style.backgroundColor = 'transparent';
-        }});
-        const popovers = doc.querySelectorAll('[data-baseweb="popover"]');
-        popovers.forEach(p => {{ p.style.backgroundColor = '#1c1c1e'; }});
+// 2. Theme Observer (Self-Cleaning)
+if (window.parent.trainerObserver) window.parent.trainerObserver.disconnect();
+window.parent.trainerObserver = new MutationObserver(() => {{
+    const cells = doc.querySelectorAll('[role="gridcell"] > div');
+    cells.forEach(c => {{
+        if (!c.getAttribute('aria-selected')) c.style.backgroundColor = 'transparent';
     }});
-    observer.observe(doc.body, {{ childList: true, subtree: true }});
-}}
+    const popovers = doc.querySelectorAll('[data-baseweb="popover"]');
+    popovers.forEach(p => {{ p.style.backgroundColor = '#1c1c1e'; }});
+}});
+window.parent.trainerObserver.observe(doc.body, {{ childList: true, subtree: true }});
 
-// 2. Action Bridge
+// 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
     const inputs = doc.querySelectorAll('input');
     let target = null;
@@ -517,33 +515,16 @@ window.parent.sendActionToStreamlit = function(actionStr) {{
     }}
 }};
 
-// 3. Listeners
-if (!doc.body.hasAttribute('data-bridge-v2')) {{
-    doc.body.setAttribute('data-bridge-v2', 'true');
+// 4. Listeners (Re-binding safely)
+doc.body.setAttribute('data-bridge-v3', 'true');
+// Use a global click handler that doesn't duplicate
+if (!window.parent.hasTrainerClick) {{
+    window.parent.hasTrainerClick = true;
     doc.body.addEventListener('click', (e) => {{
         const btn = e.target.closest('[data-action]');
-        if(btn) {{ e.preventDefault(); window.parent.sendActionToStreamlit(btn.getAttribute('data-action')); }}
-    }});
-    
-    // Drag & Drop
-    doc.body.addEventListener('dragstart', (e) => {{
-        const el = e.target.closest('[data-drag-id]');
-        if (el) {{ e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id')); el.style.opacity = '0.4'; }}
-    }});
-    doc.body.addEventListener('dragend', (e) => {{
-        const el = e.target.closest('[data-drag-id]');
-        if (el) el.style.opacity = '1';
-    }});
-    doc.body.addEventListener('dragover', (e) => {{
-        const el = e.target.closest('[data-drop-zone]');
-        if (el) {{ e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }}
-    }});
-    doc.body.addEventListener('drop', (e) => {{
-        const el = e.target.closest('[data-drop-zone]');
-        if (el) {{
-            e.preventDefault(); el.style.background = '';
-            const data = e.dataTransfer.getData('text/plain');
-            if(data) window.parent.sendActionToStreamlit('action=move&data=' + data + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+        if(btn) {{ 
+            e.preventDefault(); 
+            if (window.parent.sendActionToStreamlit) window.parent.sendActionToStreamlit(btn.getAttribute('data-action')); 
         }}
     }});
 }}
