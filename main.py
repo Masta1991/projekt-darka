@@ -17,18 +17,30 @@ if "authenticated" not in st.session_state:
 
 # --- Authentication ---
 def check_password():
+    # Session timeout check (4h = 14400 seconds)
     if st.session_state.get('authenticated'):
+        login_ts = st.session_state.get('login_ts', 0)
+        if time.time() - login_ts > 14400:
+            st.session_state.authenticated = False
+            components.html("<script>window.parent.localStorage.removeItem('trainer_auth_ts');</script>", height=0)
+            st.rerun()
         return True
 
     # Check localStorage for valid session (renders invisible iframe)
     components.html("""
     <script>
     const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
-    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+    const now = Date.now();
+    if (authTs && (now - parseInt(authTs)) < 14400000) {
         // Valid session found - reload with auth flag
         if (!window.parent.location.search.includes('auto_auth=1')) {
-            window.parent.location.href = window.parent.location.pathname + '?auto_auth=1';
+            const newUrl = new URL(window.parent.location.href);
+            newUrl.searchParams.set('auto_auth', '1');
+            window.parent.location.href = newUrl.toString();
         }
+    } else if (authTs) {
+        // Session expired, clean up
+        window.parent.localStorage.removeItem('trainer_auth_ts');
     }
     </script>
     """, height=0)
@@ -36,6 +48,7 @@ def check_password():
     # Check auto_auth query param
     if st.query_params.get("auto_auth") == "1":
         st.session_state.authenticated = True
+        st.session_state.login_ts = time.time()
         st.query_params.clear()
         st.rerun()
 
@@ -47,7 +60,9 @@ def check_password():
         pwd = st.session_state.get("password", "")
         if pwd == access_code:
             st.session_state.authenticated = True
+            st.session_state.login_ts = time.time()
             st.session_state.save_login = True
+            st.session_state.password = "" 
         else:
             if pwd:
                 st.error("❌ Błędny kod dostępu")
@@ -334,7 +349,7 @@ def clear_schedule():
     st.session_state.schedule_data = {}
 
 # --- Actions via Hidden Input ---
-js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
+js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibility="collapsed")
 
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
@@ -613,14 +628,22 @@ js_code = """
 const parentDoc = window.parent.document;
 
 function sendActionToStreamlit(actionStr) {
-    const input = parentDoc.querySelector('input[aria-label="js_data_exchange"]');
-    if(input) {
-        input.focus();
+    let targetInput = null;
+    const inputs = parentDoc.querySelectorAll('input');
+    inputs.forEach(el => {
+        // Fallback selector - Streamlit may change aria attributes
+        if(el.getAttribute('aria-label') === 'js_data_exchange' || (el.id && el.id.includes('js_data_input'))) {
+            targetInput = el;
+        }
+    });
+
+    if(targetInput) {
+        targetInput.focus();
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        nativeInputValueSetter.call(input, actionStr + '&ts=' + Date.now());
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        input.blur();
+        nativeInputValueSetter.call(targetInput, actionStr + '&ts=' + Date.now());
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+        targetInput.blur();
     }
 }
 
