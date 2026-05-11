@@ -12,44 +12,317 @@ import streamlit.components.v1 as components
 # --- Page Config ---
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# --- Page Config ---
+st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 
 # Initialize DataHandler
 if 'dh' not in st.session_state:
+    from data_handler import DataHandler
     st.session_state.dh = DataHandler()
 
-# --- Authentication ---
+# --- CSS Injection (Premium Dark) ---
+def local_css():
+    st.markdown("""
+<style>
+    /* Global Styles */
+    .stApp { background: #0d1117; color: #ffffff; font-family: 'Inter', sans-serif; }
+    [data-testid="stSidebar"] { display: none; }
+    header { visibility: hidden; }
+    .block-container { padding-top: 1.5rem !important; max-width: 98% !important; }
+    
+    /* Hide JS Bridge Input completely but keep it focusable */
+    div[data-testid="stTextInput"]:has(input[aria-label="js_data_exchange"]),
+    div[data-testid="stTextInput"]:has(input[id*="js_data_input"]) {
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* v28 Exercise Button Design (Targeting st.popover) */
+    div.element-container:has(.ex-btn-marker) { display: none !important; }
+
+    /* Target the button inside st.popover */
+    div.element-container:has(.ex-btn-marker) + div.element-container div[data-testid="stPopover"] > button {
+        position: relative !important;
+        padding-left: 50px !important;
+        justify-content: flex-start !important;
+        height: 70px !important;
+        min-height: 70px !important;
+        border-radius: 14px !important;
+        background: #1c1c1e !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+    }
+    
+    /* Activity Circle Indicator */
+    div.element-container:has(.ex-btn-marker) + div.element-container div[data-testid="stPopover"] > button::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px; 
+        height: 18px; 
+        border-radius: 50%; 
+        border: 2px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    /* Active State (Circle filled) */
+    div.element-container:has(.ex-btn-marker.btn-active) + div.element-container div[data-testid="stPopover"] > button::before {
+        background: #31d5f2 !important;
+        border-color: #31d5f2 !important;
+        box-shadow: 0 0 15px rgba(49,213,242,0.5) !important;
+    }
+    
+    div.element-container:has(.ex-btn-marker.btn-active) + div.element-container div[data-testid="stPopover"] > button {
+        border-color: #31d5f2 !important;
+        background: rgba(49,213,242,0.05) !important;
+    }
+
+    /* Layout */
+    .main-layout { display: flex; gap: 30px; }
+    
+    /* Tile Link Styling - Sidebar */
+    .tile-link {
+        text-decoration: none !important;
+        display: block;
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #1c1c1e;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100px;
+        cursor: pointer;
+    }
+    .tile-link:hover { transform: translateX(5px); border-color: #31d5f2; background: #252528; }
+    .tile-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.3; z-index: 1; filter: grayscale(100%); transition: 0.3s; }
+    .tile-link:hover .tile-img { opacity: 0.5; filter: grayscale(0%); }
+    .tile-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(13,17,23,0.9) 0%, rgba(13,17,23,0.4) 100%); z-index: 2; }
+    .tile-content { position: relative; z-index: 3; padding: 15px 20px; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .tile-label { color: #31d5f2; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .tile-title { font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 2px; }
+    .tile-desc { font-size: 11px; color: #8b949e; line-height: 1.2; }
+
+    /* Calendar Premium Grid */
+    .calendar-wrapper { 
+        background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); 
+        padding: 20px; overflow-x: auto;
+    }
+    .calendar-grid-header { display: grid; gap: 10px; margin-bottom: 15px; }
+    .day-header { text-align: center; color: #8b949e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .day-header.today { color: #31d5f2; }
+    .calendar-row { display: grid; gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
+    .time-col { color: #444; font-size: 11px; font-weight: 700; padding-top: 10px; text-align: right; padding-right: 15px; }
+    .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 120px; }
+    .calendar-cell:hover { background: rgba(255,255,255,0.03); }
+
+    /* Event Card */
+    .event-card {
+        background: rgba(49, 213, 242, 0.1); border-left: 4px solid #31d5f2; border-radius: 8px;
+        padding: 8px 12px; height: calc(100% - 10px); margin: 5px; cursor: pointer;
+        transition: all 0.2s; position: relative; user-select: none;
+        display: flex; flex-direction: column; justify-content: center;
+        width: calc(100% - 10px); box-sizing: border-box;
+    }
+    .event-card:hover { transform: translateY(-2px); background: rgba(49, 213, 242, 0.2); }
+    .event-name { font-weight: 800; font-size: 13px; color: white; margin-bottom: 2px; }
+    .event-type { font-size: 10px; color: #8b949e; }
+
+    /* Delete Button */
+    .delete-btn {
+        position: absolute; top: -5px; right: -5px; width: 22px; height: 22px;
+        background: #ff4b4b; color: white; border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; font-size: 16px; font-weight: 900;
+        cursor: pointer; z-index: 100; transition: transform 0.2s;
+        opacity: 0; pointer-events: none;
+    }
+    .delete-btn:hover { transform: scale(1.2); }
+
+    /* Edit Mode Active */
+    .edit-mode-active .event-card { border-style: dashed; border-color: #31d5f2; cursor: move; }
+    .edit-mode-active .delete-btn { opacity: 1; pointer-events: auto; }
+    .edit-mode-active .event-card a { pointer-events: none; }
+    .edit-toggle-btn { background: rgba(49, 213, 242, 0.1); border: 1px solid #31d5f2; color: #31d5f2; padding: 5px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px; }
+    .edit-toggle-btn.active { background: #31d5f2; color: #0d1117; }
+
+    /* Deleted Excel Style */
+    .deleted-marker { position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid; border-width: 0 12px 12px 0; border-color: transparent #ff4b4b transparent transparent; z-index: 10; }
+    .deleted-info { display: none; position: absolute; top: 15px; right: 0; width: 150px; background: #2d2d30; border: 1px solid #ff4b4b; border-radius: 4px; padding: 8px; font-size: 10px; color: #ff4b4b; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .calendar-cell:hover .deleted-info { display: block; }
+    .add-btn { position: absolute; inset: 0; opacity: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 20px; }
+    .calendar-cell:hover .add-btn { opacity: 1; }
+
+    /* Fix global Streamlit primary button red color */
+    .stButton > button[kind="primary"] {
+        background-color: rgba(49,213,242, 0.8) !important;
+        color: #fff !important;
+        border: 1px solid #31d5f2 !important;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #31d5f2 !important;
+        color: #000 !important;
+    }
+    
+    /* Menu button styles (global) */
+    .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+
+    /* Mobile Responsive */
+    @media (max-width: 1000px) {
+        .calendar-wrapper { padding: 10px; border-radius: 16px; }
+        .calendar-grid-header, .calendar-row { min-width: 800px; }
+        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+local_css()
+
+# --- Actions via Hidden Input (MUST BE AT TOP) ---
+js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibility="collapsed")
+
+# --- JS Bridge Script (Injected Globally) ---
+js_bridge = """
+<script>
+const parentDoc = window.parent.document;
+
+function sendActionToStreamlit(actionStr) {
+    let targetInput = null;
+    const inputs = parentDoc.querySelectorAll('input');
+    inputs.forEach(el => {
+        if(el.getAttribute('aria-label') === 'js_data_exchange' || (el.id && el.id.includes('js_data_input'))) {
+            targetInput = el;
+        }
+    });
+
+    if(targetInput) {
+        targetInput.focus();
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeInputValueSetter.call(targetInput, actionStr + '&ts=' + Date.now());
+        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+        targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+        targetInput.blur();
+    }
+}
+
+if (!parentDoc.getElementById('injected-global-script')) {
+    const s = parentDoc.createElement('script');
+    s.id = 'injected-global-script';
+    s.innerHTML = `
+        // Safe localStorage check for auto-login
+        function checkAutoLogin() {
+            try {
+                // Try parent localStorage first, then fallback to local
+                const storage = window.localStorage || (window.parent && window.parent.localStorage);
+                const authTs = storage.getItem('trainer_auth_ts');
+                if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+                    if (!window.location.search.includes('auto_auth=1')) {
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('auto_auth', '1');
+                        window.location.href = newUrl.toString();
+                    }
+                }
+            } catch (e) {
+                console.log('Storage access denied, falling back to local');
+                const localTs = window.localStorage.getItem('trainer_auth_ts');
+                if (localTs && (Date.now() - parseInt(localTs)) < 14400000) {
+                     if (!window.location.search.includes('auto_auth=1')) {
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('auto_auth', '1');
+                        window.location.href = newUrl.toString();
+                    }
+                }
+            }
+        }
+        checkAutoLogin();
+
+        if (!document.head.querySelector('#dd-touch')) {
+            const touchScript = document.createElement('script');
+            touchScript.id = 'dd-touch';
+            touchScript.src = 'https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js';
+            document.head.appendChild(touchScript);
+        }
+
+        if (!document.body.hasAttribute('data-drag-bound')) {
+            document.body.setAttribute('data-drag-bound', 'true');
+            
+            document.body.addEventListener('click', (e) => {
+                const stopEl = e.target.closest('[data-action-stop]');
+                if (stopEl) {
+                    e.stopPropagation(); e.preventDefault();
+                    window.sendActionToStreamlit(stopEl.getAttribute('data-action-stop'));
+                    return;
+                }
+                const actionEl = e.target.closest('[data-action]');
+                if (actionEl) {
+                    e.preventDefault();
+                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                }
+            });
+            
+            document.body.addEventListener('dragstart', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) {
+                    e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id'));
+                    el.style.opacity = '0.4';
+                }
+            });
+            document.body.addEventListener('dragend', (e) => {
+                const el = e.target.closest('[data-drag-id]');
+                if (el) el.style.opacity = '1';
+            });
+            document.body.addEventListener('dragover', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
+            });
+            document.body.addEventListener('dragleave', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) el.style.background = '';
+            });
+            document.body.addEventListener('drop', (e) => {
+                const el = e.target.closest('[data-drop-zone]');
+                if (el) {
+                    e.preventDefault();
+                    el.style.background = '';
+                    const data = e.dataTransfer.getData('text/plain');
+                    if(data) {
+                        const parts = data.split(',');
+                        if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
+                            window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+                        }
+                    }
+                }
+            });
+        }
+    `;
+    parentDoc.body.appendChild(s);
+}
+
+parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
+</script>
+"""
+components.html(js_bridge, height=0, width=0)
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# --- Authentication Logic ---
 def check_password():
-    # Session timeout check (4h = 14400 seconds)
     if st.session_state.get('authenticated'):
         login_ts = st.session_state.get('login_ts', 0)
         if time.time() - login_ts > 14400:
             st.session_state.authenticated = False
-            components.html("<script>window.parent.localStorage.removeItem('trainer_auth_ts');</script>", height=0)
             st.rerun()
         return True
 
-    # Check localStorage for valid session (renders invisible iframe)
-    components.html("""
-    <script>
-    const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
-    const now = Date.now();
-    if (authTs && (now - parseInt(authTs)) < 14400000) {
-        // Valid session found - reload with auth flag
-        if (!window.parent.location.search.includes('auto_auth=1')) {
-            const newUrl = new URL(window.parent.location.href);
-            newUrl.searchParams.set('auto_auth', '1');
-            window.parent.location.href = newUrl.toString();
-        }
-    } else if (authTs) {
-        // Session expired, clean up
-        window.parent.localStorage.removeItem('trainer_auth_ts');
-    }
-    </script>
-    """, height=0)
-
-    # Check auto_auth query param
+    # Check auto_auth query param (set by JS bridge)
     if st.query_params.get("auto_auth") == "1":
         st.session_state.authenticated = True
         st.session_state.login_ts = time.time()
@@ -57,10 +330,7 @@ def check_password():
         st.rerun()
 
     def password_entered():
-        try:
-            access_code = st.secrets.get("access_code", "170491")
-        except:
-            access_code = "170491"
+        access_code = st.secrets.get("access_code", "170491")
         pwd = st.session_state.get("password", "")
         if pwd == access_code:
             st.session_state.authenticated = True
@@ -68,8 +338,7 @@ def check_password():
             st.session_state.save_login = True
             st.session_state.password = "" 
         else:
-            if pwd:
-                st.error("❌ Błędny kod dostępu")
+            if pwd: st.error("❌ Błędny kod dostępu")
 
     st.markdown("""
     <style>
@@ -87,26 +356,21 @@ def check_password():
     """, unsafe_allow_html=True)
 
     st.markdown('<div style="text-align:center; margin-top:60px;"><h1 style="font-size:60px; font-weight:900; background: linear-gradient(135deg, #31d5f2, #2196F3); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">TRAINER PRO</h1><p style="color: #8b949e; font-size:14px;">Wprowadź kod dostępu</p></div>', unsafe_allow_html=True)
-
     st.text_input("Kod", type="password", key="password", on_change=password_entered, label_visibility="collapsed")
-
     st.markdown('<div style="text-align:center; margin-top:20px;">', unsafe_allow_html=True)
     st.button("🔐 ZALOGUJ", on_click=password_entered, use_container_width=True, type="primary")
     st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<p style="text-align:center; color:#444; margin-top:40px; font-size:12px;">© 2026 Trainer Pro Dashboard</p>', unsafe_allow_html=True)
     return False
 
 if not check_password():
     st.stop()
 
-# Save login to localStorage (runs after successful auth, outside callback)
+# Save login to localStorage
 if st.session_state.get('save_login'):
     st.session_state.save_login = False
-    components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
+    components.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString()); try { window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString()); } catch(e) {}</script>', height=0)
 
-# --- Navigation Logic ---
-# Ensure page persists across reruns
+# --- Navigation & Page Persistence ---
 if "page" not in st.session_state:
     st.session_state.page = st.query_params.get("page", "home")
 
@@ -576,21 +840,27 @@ with col_main:
             exercises = exercises_dict.get(part_name, [])[:5] 
             for i, ex in enumerate(exercises):
                 is_sel = ex in st.session_state.add_data_exercises
-                btn_type = "primary" if is_sel else "secondary"
-                btn_label = f"🔵 {ex}" if is_sel else f"⚪ {ex}"
                 
-                with st.container():
-                    col_btn, col_kg = st.columns([3, 1])
-                    if col_btn.button(btn_label, key=f"sel_{part_name}_{i}", type=btn_type, use_container_width=True):
-                        if is_sel: del st.session_state.add_data_exercises[ex]
-                        else: st.session_state.add_data_exercises[ex] = 20.0
-                        st.rerun()
+                # Hidden marker for v28-style CSS indicator
+                active_class = "btn-active" if is_sel else "btn-inactive"
+                st.markdown(f'<div class="ex-btn-marker {active_class}"></div>', unsafe_allow_html=True)
+                
+                # Popover provides the "Nice Model" for KG selection
+                with st.popover(ex, use_container_width=True):
+                    st.markdown(f"### {ex}")
+                    st.markdown("Ustaw obciążenie dla tego ćwiczenia:")
                     
-                    if is_sel:
-                        current_kg = st.session_state.add_data_exercises.get(ex, 20.0)
-                        new_kg = col_kg.number_input("kg", min_value=0.0, max_value=500.0, value=float(current_kg), step=2.5, key=f"kg_{part_name}_{i}")
-                        if new_kg != current_kg:
-                            st.session_state.add_data_exercises[ex] = new_kg
+                    current_kg = st.session_state.add_data_exercises.get(ex, 20.0)
+                    new_kg = st.number_input("Obciążenie (kg)", min_value=0.0, max_value=500.0, value=float(current_kg), step=2.5, key=f"kg_{part_name}_{i}")
+                    
+                    col1, col2 = st.columns(2)
+                    if col1.button("✅ POTWIERDŹ", key=f"conf_{part_name}_{i}", use_container_width=True, type="primary"):
+                        st.session_state.add_data_exercises[ex] = new_kg
+                        st.rerun()
+                    if col2.button("❌ USUŃ", key=f"rem_{part_name}_{i}", use_container_width=True):
+                        if ex in st.session_state.add_data_exercises:
+                            del st.session_state.add_data_exercises[ex]
+                        st.rerun()
 
             
         with c1:
