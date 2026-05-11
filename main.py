@@ -536,17 +536,51 @@ s.innerHTML = `
 `;
 doc.head.appendChild(s);
 
-// 2. Theme Observer (Self-Cleaning)
+// 2. Theme Observer (Self-Cleaning) - ATOMOWY inline override
 if (window.parent.trainerObserver) window.parent.trainerObserver.disconnect();
 window.parent.trainerObserver = new MutationObserver(() => {{
-    const cells = doc.querySelectorAll('[role="gridcell"] > div');
-    cells.forEach(c => {{
-        if (!c.getAttribute('aria-selected')) c.style.backgroundColor = 'transparent';
+    // Fix popover backgrounds
+    doc.querySelectorAll('[data-baseweb="popover"]').forEach(p => {{
+        p.style.setProperty('background-color', '#0d1117', 'important');
+        p.style.setProperty('border-radius', '20px', 'important');
+        p.style.setProperty('border', 'none', 'important');
     }});
-    const popovers = doc.querySelectorAll('[data-baseweb="popover"]');
-    popovers.forEach(p => {{ p.style.backgroundColor = '#1c1c1e'; }});
+    // Fix calendar container
+    doc.querySelectorAll('[data-baseweb="calendar"]').forEach(cal => {{
+        cal.style.setProperty('background-color', '#0d1117', 'important');
+    }});
+    // Kill white blocks - clear ALL grid cell backgrounds
+    doc.querySelectorAll('[data-baseweb="calendar"] [role="gridcell"] > div').forEach(c => {{
+        if (c.closest('[aria-selected="true"]')) {{
+            c.style.setProperty('background-color', '#31d5f2', 'important');
+            c.style.setProperty('color', '#0d1117', 'important');
+            c.style.setProperty('border-radius', '50%', 'important');
+        }} else {{
+            c.style.setProperty('background-color', 'transparent', 'important');
+        }}
+    }});
+    // Fix the selected day button/div
+    doc.querySelectorAll('[data-baseweb="calendar"] [aria-selected="true"]').forEach(sel => {{
+        sel.style.setProperty('background-color', '#31d5f2', 'important');
+        sel.style.setProperty('color', '#0d1117', 'important');
+        sel.style.setProperty('border-radius', '50%', 'important');
+        sel.style.setProperty('box-shadow', '0 0 15px rgba(49,213,242,0.8)', 'important');
+        // Also fix all children of selected
+        sel.querySelectorAll('*').forEach(child => {{
+            child.style.setProperty('background-color', '#31d5f2', 'important');
+            child.style.setProperty('color', '#0d1117', 'important');
+        }});
+    }});
+    // Fix disabled/empty days  
+    doc.querySelectorAll('[data-baseweb="calendar"] [aria-disabled="true"]').forEach(d => {{
+        d.style.setProperty('visibility', 'hidden', 'important');
+    }});
+    // Fix grid role backgrounds
+    doc.querySelectorAll('[role="grid"]').forEach(g => {{
+        g.style.setProperty('background-color', '#0d1117', 'important');
+    }});
 }});
-window.parent.trainerObserver.observe(doc.body, {{ childList: true, subtree: true }});
+window.parent.trainerObserver.observe(doc.body, {{ childList: true, subtree: true, attributes: true }});
 
 // 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
