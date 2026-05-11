@@ -15,82 +15,29 @@ st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="w
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- Unified JS Bridge and Action Handler ---
-def send_js_action(action_str):
-    components.html(f"""
-    <script>
-    const input = window.parent.document.querySelector('input[aria-label="js_data_exchange"]');
-    if(input) {{
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        setter.call(input, "{action_str}&ts=" + Date.now());
-        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-    }}
-    </script>
-    """, height=0)
-
-js_data = st.text_input("js_data_exchange", label_visibility="collapsed", key="js_bridge_input")
-
-if js_data and js_data != st.session_state.get('last_js_data', ''):
-    st.session_state.last_js_data = js_data
-    try:
-        parts = dict(p.split('=') for p in js_data.split('&'))
-        action = parts.get('action')
-        if action == "auto_login":
-            st.session_state.authenticated = True
-            st.rerun()
-        elif action == "delete":
-            d_p, h_p = int(parts.get("d", -1)), int(parts.get("h", -1))
-            if (d_p, h_p) in st.session_state.schedule_data: st.session_state.schedule_data[(d_p, h_p)]['status'] = 'deleted'
-        elif action == "move":
-            f_d, f_h = int(parts.get("fd", -1)), int(parts.get("fh", -1))
-            t_d, t_h = int(parts.get("td", -1)), int(parts.get("th", -1))
-            if (f_d, f_h) in st.session_state.schedule_data:
-                val = st.session_state.schedule_data.pop((f_d, f_h))
-                st.session_state.schedule_data[(t_d, t_h)] = val
-        elif action == "prev_month":
-            st.session_state.mini_cal_date = st.session_state.mini_cal_date - relativedelta(months=1)
-        elif action == "next_month":
-            st.session_state.mini_cal_date = st.session_state.mini_cal_date + relativedelta(months=1)
-        elif action == "select_date":
-            st.session_state.selected_date = datetime.date(int(parts.get("y")), int(parts.get("m")), int(parts.get("d")))
-            st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
-        elif action == "nav":
-            st.session_state.page = parts.get('page', 'home')
-        elif action == "open_event":
-            st.session_state.page = "add_data"
-            st.session_state.event_client = parts.get('client', '')
-            st.session_state.event_hour = int(parts.get('hour', 12))
-            st.session_state.event_day = int(parts.get('day', 0))
-        elif action == "add_event":
-            st.session_state.page = "add_data"
-            st.session_state.event_client = ''
-            st.session_state.event_hour = int(parts.get('hour', 12))
-            st.session_state.event_day = int(parts.get('day', 0))
-    except Exception as e:
-        print(f"Action error: {e}")
-    st.rerun()
-
 # --- Authentication ---
 def check_password():
     if st.session_state.get('authenticated'):
         return True
 
-    # Render minimal JS to check localStorage even on login screen
+    # Check localStorage for valid session (renders invisible iframe)
     components.html("""
     <script>
     const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
     if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-        const input = window.parent.document.querySelector('input[aria-label="js_data_exchange"]');
-        if (input && !input.value.includes('auto_login')) {
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            setter.call(input, "action=auto_login&ts=" + Date.now());
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
+        // Valid session found - reload with auth flag
+        if (!window.parent.location.search.includes('auto_auth=1')) {
+            window.parent.location.href = window.parent.location.pathname + '?auto_auth=1';
         }
     }
     </script>
     """, height=0)
+
+    # Check auto_auth query param
+    if st.query_params.get("auto_auth") == "1":
+        st.session_state.authenticated = True
+        st.query_params.clear()
+        st.rerun()
 
     def password_entered():
         try:
@@ -378,7 +325,44 @@ def toggle_edit():
 def clear_schedule():
     st.session_state.schedule_data = {}
 
-# Action handler moved to top to support auto-login
+# --- Actions via Hidden Input ---
+js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
+
+if js_data and js_data != st.session_state.get('last_js_data', ''):
+    st.session_state.last_js_data = js_data
+    try:
+        parts = dict(p.split('=') for p in js_data.split('&'))
+        action = parts.get('action')
+        if action == "delete":
+            d_p, h_p = int(parts.get("d", -1)), int(parts.get("h", -1))
+            if (d_p, h_p) in st.session_state.schedule_data: st.session_state.schedule_data[(d_p, h_p)]['status'] = 'deleted'
+        elif action == "move":
+            f_d, f_h = int(parts.get("fd", -1)), int(parts.get("fh", -1))
+            t_d, t_h = int(parts.get("td", -1)), int(parts.get("th", -1))
+            if (f_d, f_h) in st.session_state.schedule_data:
+                val = st.session_state.schedule_data.pop((f_d, f_h))
+                st.session_state.schedule_data[(t_d, t_h)] = val
+        elif action == "prev_month":
+            st.session_state.mini_cal_date = st.session_state.mini_cal_date - relativedelta(months=1)
+        elif action == "next_month":
+            st.session_state.mini_cal_date = st.session_state.mini_cal_date + relativedelta(months=1)
+        elif action == "select_date":
+            st.session_state.selected_date = datetime.date(int(parts.get("y")), int(parts.get("m")), int(parts.get("d")))
+            st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
+        elif action == "nav":
+            st.session_state.page = parts.get('page', 'home')
+        elif action == "open_event":
+            st.session_state.page = "add_data"
+            st.session_state.event_client = parts.get('client', '')
+            st.session_state.event_hour = int(parts.get('hour', 12))
+            st.session_state.event_day = int(parts.get('day', 0))
+        elif action == "add_event":
+            st.session_state.page = "add_data"
+            st.session_state.event_client = ''
+            st.session_state.event_hour = int(parts.get('hour', 12))
+            st.session_state.event_day = int(parts.get('day', 0))
+    except Exception as e:
+        print(f"Action error: {e}")
 
 # --- LAYOUT ---
 st.markdown('<div class="main-layout">', unsafe_allow_html=True)
@@ -629,15 +613,6 @@ function sendActionToStreamlit(actionStr) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         input.blur();
-    }
-}
-
-// Auto-login check (runs always)
-const authTs = parentDoc.defaultView.localStorage.getItem('trainer_auth_ts');
-if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-    if (!window._autoLoginTriggered) {
-        window._autoLoginTriggered = true;
-        sendActionToStreamlit('action=auto_login');
     }
 }
 
