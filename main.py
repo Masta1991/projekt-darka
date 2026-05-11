@@ -592,6 +592,9 @@ def local_css():
         
         .block-container { padding-top: 0.5rem !important; }
         header[data-testid="stHeader"] { display: none !important; }
+        
+        /* Ensure grid is visible */
+        .mobile-grid-container { display: block !important; width: 100% !important; }
     }
 
     /* Mobile Responsive */
@@ -656,38 +659,13 @@ s.innerHTML = `
             margin: 0 !important;
             padding: 0 !important;
         }}
+        /* Hide duplicate buttons by their labels */
+        button:has(p:contains("DZIEŃ")), button:has(p:contains("TYDZIEŃ")), button:has(p:contains("EDYTUJ")) {{
+            display: none !important;
+        }}
     }}
 `;
 doc.head.appendChild(s);
-
-// 2. Mobile Surgical Observer
-const observer = new MutationObserver(() => {{
-    if (window.innerWidth <= 1000) {{
-        const desktopElements = doc.querySelectorAll('.desktop-only');
-        desktopElements.forEach(el => {{
-            const block = el.closest('div[data-testid="stVerticalBlock"] > div');
-            if (block) {{
-                block.style.display = 'none';
-                block.style.height = '0';
-                block.style.margin = '0';
-                block.style.padding = '0';
-            }}
-        }});
-        
-        // Hide duplicate buttons outside header
-        const allButtons = doc.querySelectorAll('button');
-        allButtons.forEach(btn => {{
-            const txt = btn.innerText || "";
-            if (txt.includes('DZIEŃ') || txt.includes('TYDZIEŃ') || txt.includes('EDYTUJ')) {{
-                if (!btn.closest('.mobile-header')) {{
-                    const block = btn.closest('div[data-testid="stVerticalBlock"] > div');
-                    if (block) block.style.display = 'none';
-                }}
-            }}
-        }});
-    }}
-}});
-observer.observe(doc.body, {{ childList: true, subtree: true }});
 
 // 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
@@ -1013,21 +991,20 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # Duplicate buttons and Header - Hidden on Mobile via the :has(.desktop-only) rule
+        # Duplicate buttons and Header - Wrapped in desktop-only div
+        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
-            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
         with col_hdr_v:
-            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
             v_col1, v_col2 = st.columns(2)
             if v_col1.button("📱 DZIEŃ", key="v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "dzień"; st.rerun()
             if v_col2.button("📅 TYDZIEŃ", key="v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
                 st.session_state.calendar_view = "tydzień"; st.rerun()
         with col_hdr2:
-            st.markdown('<div class="desktop-only"></div>', unsafe_allow_html=True)
             st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="v_edit_btn", on_click=toggle_edit, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # 3. Kalendarz zapisów - Visible on mobile
         try:
@@ -1041,7 +1018,7 @@ with col_main:
                 show_days_indices = list(range(6))
                 cols_css = "grid-template-columns: 60px repeat(6, 1fr);"
             
-            full_html = f'<div class="calendar-wrapper {edit_cls}">'
+            full_html = f'<div class="calendar-wrapper {edit_cls} mobile-grid-container">'
             full_html += f'<div class="calendar-grid-header" style="{cols_css}"><div class="day-header"></div>'
             
             # Calculate dates for the selected week
