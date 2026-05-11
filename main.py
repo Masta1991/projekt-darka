@@ -551,14 +551,14 @@ if (!parentDoc.getElementById('injected-global-script')) {
             document.head.appendChild(touchScript);
         }
 
-        if (!document.body.hasAttribute('data-drag-bound')) {
-            document.body.setAttribute('data-drag-bound', 'true');
+        if (!parentDoc.body.hasAttribute('data-drag-bound')) {
+            parentDoc.body.setAttribute('data-drag-bound', 'true');
             
-            document.body.addEventListener('click', (e) => {
+            parentDoc.body.addEventListener('click', (e) => {
                 const actionEl = e.target.closest('[data-action]');
                 if (actionEl) {
                     e.preventDefault(); e.stopPropagation();
-                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                    sendActionToStreamlit(actionEl.getAttribute('data-action'));
                     return;
                 }
                 const stopEl = e.target.closest('[data-action-stop]');
@@ -567,32 +567,32 @@ if (!parentDoc.getElementById('injected-global-script')) {
                     const action = stopEl.getAttribute('data-action-stop');
                     if (action && action !== "true") {
                         e.preventDefault();
-                        window.sendActionToStreamlit(action);
+                        sendActionToStreamlit(action);
                     }
                     return;
                 }
             });
             
-            document.body.addEventListener('dragstart', (e) => {
+            parentDoc.body.addEventListener('dragstart', (e) => {
                 const el = e.target.closest('[data-drag-id]');
                 if (el) {
                     e.dataTransfer.setData('text/plain', el.getAttribute('data-drag-id'));
                     el.style.opacity = '0.4';
                 }
             });
-            document.body.addEventListener('dragend', (e) => {
+            parentDoc.body.addEventListener('dragend', (e) => {
                 const el = e.target.closest('[data-drag-id]');
                 if (el) el.style.opacity = '1';
             });
-            document.body.addEventListener('dragover', (e) => {
+            parentDoc.body.addEventListener('dragover', (e) => {
                 const el = e.target.closest('[data-drop-zone]');
                 if (el) { e.preventDefault(); el.style.background = 'rgba(49, 213, 242, 0.1)'; }
             });
-            document.body.addEventListener('dragleave', (e) => {
+            parentDoc.body.addEventListener('dragleave', (e) => {
                 const el = e.target.closest('[data-drop-zone]');
                 if (el) el.style.background = '';
             });
-            document.body.addEventListener('drop', (e) => {
+            parentDoc.body.addEventListener('drop', (e) => {
                 const el = e.target.closest('[data-drop-zone]');
                 if (el) {
                     e.preventDefault();
@@ -601,7 +601,7 @@ if (!parentDoc.getElementById('injected-global-script')) {
                     if(data) {
                         const parts = data.split(',');
                         if(parts[0] !== '' && parts[1] !== '' && (parts[0] !== el.getAttribute('data-drop-d') || parts[1] !== el.getAttribute('data-drop-h'))) {
-                            window.sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
+                            sendActionToStreamlit('action=move&fd=' + parts[0] + '&fh=' + parts[1] + '&td=' + el.getAttribute('data-drop-d') + '&th=' + el.getAttribute('data-drop-h'));
                         }
                     }
                 }
