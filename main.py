@@ -276,6 +276,52 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
+
+    /* ADD BUTTON (+) - Centered */
+    .add-btn { 
+        position: absolute; 
+        inset: 0; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        color: rgba(255,255,255,0.1); 
+        font-size: 24px; 
+        transition: all 0.2s;
+        opacity: 0;
+    }
+    .calendar-cell:hover .add-btn { 
+        opacity: 1; 
+        color: #31d5f2; 
+    }
+
+    /* DELETED EXCEL STYLE - Red triangle marker */
+    .deleted-marker { 
+        position: absolute; 
+        top: 0; 
+        right: 0; 
+        width: 0; 
+        height: 0; 
+        border-style: solid; 
+        border-width: 0 12px 12px 0; 
+        border-color: transparent #ff4b4b transparent transparent; 
+        z-index: 10; 
+    }
+    .deleted-info { 
+        display: none; 
+        position: absolute; 
+        top: 15px; 
+        right: 0; 
+        width: 150px; 
+        background: #2d2d30; 
+        border: 1px solid #ff4b4b; 
+        border-radius: 4px; 
+        padding: 8px; 
+        font-size: 10px; 
+        color: #ff4b4b; 
+        z-index: 100; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    }
+    .calendar-cell:hover .deleted-info { display: block; }
 </style>
 """, unsafe_allow_html=True)
 
