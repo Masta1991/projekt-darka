@@ -323,40 +323,58 @@ def local_css():
         color: #31d5f2 !important;
     }
 
-    /* --- ULTIMATE CALENDAR FIX --- */
-    /* Root container */
-    [data-baseweb="popover"] [data-baseweb="calendar"] {
-        background-color: #1c1c1e !important;
-        color: white !important;
+    /* --- KOD FIX DLA KALENDARZA "DATA" --- */
+    /* 1. Całkowite wyczyszczenie tła popovera i kalendarza */
+    [data-baseweb="popover"], 
+    [data-baseweb="calendar"],
+    [role="grid"] {
+        background-color: #0d1117 !important;
+        background: #0d1117 !important;
+        border-radius: 20px !important;
     }
-    
-    /* Header (Month/Year) */
-    [data-baseweb="calendar"] header {
-        background-color: #1c1c1e !important;
-    }
-    
-    /* All grid cells and their inner divs (Fix white blocks) */
+
+    /* 2. USUNIĘCIE BIAŁYCH BLOKÓW (Kluczowa poprawka) */
     [data-baseweb="calendar"] [role="gridcell"],
-    [data-baseweb="calendar"] [role="gridcell"] > div,
-    [data-baseweb="calendar"] [role="gridcell"] button {
+    [data-baseweb="calendar"] [role="gridcell"] > div {
         background-color: transparent !important;
         background: transparent !important;
-        color: white !important;
+        border: none !important;
     }
 
-    /* THE SELECTION CIRCLE (Blue instead of red) */
-    [data-baseweb="calendar"] [aria-selected="true"] button,
-    [data-baseweb="calendar"] [aria-selected="true"] > div,
+    /* 3. Ukrycie dni z poprzedniego/następnego miesiąca */
+    [aria-disabled="true"] {
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    /* 4. STYLIZACJA WYBRANEGO DNIA (Błękitny Glow) */
     [data-baseweb="calendar"] [aria-selected="true"] {
         background-color: #31d5f2 !important;
-        background: #31d5f2 !important;
-        color: black !important;
+        color: #0d1117 !important;
         border-radius: 50% !important;
+        box-shadow: 0 0 15px rgba(49, 213, 242, 0.6) !important;
     }
 
-    /* Arrows */
+    [data-baseweb="calendar"] [aria-selected="true"] > div {
+        background-color: #31d5f2 !important;
+        color: #0d1117 !important;
+        font-weight: 700 !important;
+    }
+
+    /* 5. Kolory tekstu i ikon */
+    [data-baseweb="calendar"] header, 
+    [data-baseweb="calendar"] select {
+        color: white !important;
+        background-color: transparent !important;
+    }
+
     [data-baseweb="calendar"] svg {
         fill: #31d5f2 !important;
+    }
+
+    /* Kolor nazw dni (Mo, Tu, We...) */
+    [data-baseweb="calendar"] [role="gridcell"] {
+        color: #8b949e !important;
     }
 
     /* Menu button styles (global) */
