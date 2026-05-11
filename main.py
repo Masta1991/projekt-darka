@@ -504,9 +504,49 @@ def local_css():
     .pill-val { font-size: 16px; font-weight: 900; color: white; line-height: 1; }
     .pill-unit { font-size: 8px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
 
+    /* MOBILE HEADER & MENU */
+    .mobile-header {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        background: #1c1c1e;
+        padding: 15px 20px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(49, 213, 242, 0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .mobile-logo { font-weight: 900; color: #31d5f2; font-size: 20px; }
+    .mobile-menu-btn {
+        background: rgba(49, 213, 242, 0.1);
+        border: 1px solid #31d5f2;
+        color: #31d5f2;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        text-transform: uppercase;
+        font-size: 12px;
+    }
+
+    /* MOBILE SIDEBAR */
+    .mobile-sidebar-content {
+        display: block;
+    }
+    
+    @media (min-width: 1001px) {
+        .mobile-sidebar-content { display: block !important; }
+    }
+    
+    @media (max-width: 1000px) {
+        .mobile-header { display: flex; }
+        .mobile-sidebar-content { display: none; }
+    }
+
     /* Mobile Responsive */
     @media (max-width: 1000px) {
-        .calendar-wrapper { padding: 10px; border-radius: 16px; }
+        .mobile-header { display: flex; }
+        .calendar-wrapper { padding: 10px; border-radius: 16px; min-width: unset !important; overflow-x: auto; }
         .calendar-grid-header, .calendar-row { min-width: 800px; }
         .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         .exercise-row { height: 70px; padding: 0 15px; }
@@ -514,6 +554,16 @@ def local_css():
         .pill-btn { width: 28px; height: 28px; font-size: 18px; }
         .pill-display { width: 40px; height: 40px; }
         .pill-val { font-size: 13px; }
+        
+        /* Stack columns on mobile */
+        [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; min-width: 100% !important; }
+    }
+
+    /* LANDSCAPE OPTIMIZATION */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .calendar-row { min-height: 60px !important; }
+        .calendar-wrapper { max-height: 85vh !important; }
+        .day-header { min-height: 30px !important; font-size: 10px !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -767,6 +817,9 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
             st.session_state.selected_week = st.session_state.selected_date.isocalendar()[1]
         elif action == "nav":
             st.session_state.page = parts.get('page', 'home')
+            st.session_state.mobile_menu = False # Close menu after navigation
+        elif action == "toggle_menu":
+            st.session_state.mobile_menu = not st.session_state.mobile_menu
         elif action == "open_event":
             st.session_state.page = "add_data"
             st.session_state.event_client = parts.get('client', '')
@@ -781,11 +834,41 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
     except Exception as e:
         print(f"Action error: {e}")
 
+# --- LAYOUT & MOBILE MENU LOGIC ---
+if "mobile_menu" not in st.session_state:
+    st.session_state.mobile_menu = False
+
+def toggle_mobile_menu():
+    st.session_state.mobile_menu = not st.session_state.mobile_menu
+
+# Mobile Header (Visible only on mobile via CSS)
+st.markdown(f"""
+    <div class="mobile-header">
+        <div class="mobile-logo">TRAINER PRO</div>
+        <div class="mobile-menu-btn" data-action="action=toggle_menu">MENU</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Add toggle_menu to action handler
+# (This would be handled in the consolidated actions section if not already there)
+
 # --- LAYOUT ---
 st.markdown('<div class="main-layout">', unsafe_allow_html=True)
 col_side, col_main = st.columns([1, 4])
 
+# On mobile, we only show col_side if mobile_menu is toggled
+show_sidebar = True
+# Note: Since we can't reliably detect screen width on server-side, 
+# we rely on the user toggling it OR show it always for desktop.
+# A better approach: In CSS we hide the sidebar col on mobile, 
+# and show it only when a class is present.
+
 with col_side:
+    # On mobile (<1000px), visibility is controlled by session state toggle.
+    # On desktop, CSS (display: block !important) overrides this.
+    sidebar_style = "display: block !important;" if st.session_state.mobile_menu else ""
+    st.markdown(f'<div class="mobile-sidebar-content" style="{sidebar_style}">', unsafe_allow_html=True)
+    
     sel_date = st.session_state.selected_date
     d_str_today = sel_date.strftime("%Y-%m-%d")
     day_workouts = [v for k, v in st.session_state.schedule_data.items() if k[0] == d_str_today and v['status'] == 'active']
@@ -817,6 +900,8 @@ with col_side:
     bento_tile("DOKUMENTACJA", "Raporty", "Pliki PDF", "tile_reports_1778074427532.png", "reports")
     bento_tile("NOTATNIK", "Notatki", "Uwagi o klientach", "tile_notes_1778074445132.png", "notes")
     bento_tile("USTAWIENIA", "Konfiguracja", "Ustawienia aplikacji", "tile_settings_1778074463560.png", "settings")
+    
+    st.markdown('</div>', unsafe_allow_html=True) # Close mobile-sidebar-content
 
 with col_main:
     if st.session_state.page == "home":
