@@ -174,14 +174,54 @@ def local_css():
     .tile-desc { font-size: 11px; color: #8b949e; line-height: 1.2; }
 
     /* Calendar Premium Grid */
-    .calendar-wrapper { background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); padding: 20px; }
-    .calendar-grid-header { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 10px; margin-bottom: 15px; }
-    .day-header { text-align: center; color: #8b949e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .day-header.today { color: #31d5f2; }
-    .calendar-row { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
-    .time-col { color: #444; font-size: 11px; font-weight: 700; padding-top: 10px; text-align: right; padding-right: 15px; }
-    .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; }
-    .calendar-cell:hover { background: rgba(255,255,255,0.03); }
+    .calendar-wrapper { 
+        margin-top: 10px; 
+        border: 1px solid #2d2d3a; 
+        border-radius: 12px; 
+        overflow: auto; 
+        max-height: 75vh;
+        position: relative;
+    }
+    .calendar-grid-header { 
+        display: grid; 
+        grid-template-columns: 50px repeat(6, 1fr); 
+        background: #161b22; 
+        border-bottom: 1px solid #2d2d3a;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .day-header { 
+        padding: 10px 5px; 
+        text-align: center; 
+        font-weight: 700; 
+        color: #8b949e; 
+        font-size: 11px;
+        background: #161b22;
+    }
+    /* Fixed top-left corner */
+    .day-header:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 101;
+    }
+    .calendar-row { 
+        display: grid; 
+        grid-template-columns: 50px repeat(6, 1fr); 
+        border-bottom: 1px solid #1f2128; 
+    }
+    .time-col { 
+        font-size: 10px; 
+        color: #484f58; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        background: #0d1117; 
+        border-right: 1px solid #1f2128; 
+        position: sticky;
+        left: 0;
+        z-index: 90;
+    }
 
     /* Event Card */
     .event-card {
