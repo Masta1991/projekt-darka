@@ -553,6 +553,9 @@ def local_css():
     }
     .mobile-nav-item:hover { background: rgba(49, 213, 242, 0.1); color: #31d5f2; }
     
+    /* DESKTOP ONLY HIDER */
+    .desktop-only { display: block; }
+    
     @media (min-width: 1001px) {
         .mobile-sidebar-content { display: block !important; }
     }
@@ -561,6 +564,7 @@ def local_css():
         .mobile-header { display: flex; }
         .mobile-sidebar-content { display: none !important; } /* Hide bento tiles on mobile home */
         .mobile-nav-dropdown { display: flex; }
+        .desktop-only { display: none !important; }
     }
 
     /* Mobile Responsive */
@@ -916,6 +920,31 @@ with col_side:
     dowodzenie_html = f"""<div style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: justify; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div style="float:right;"><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
     st.markdown(dowodzenie_html, unsafe_allow_html=True)
 
+    # --- LISTA TRENINGÓW (ALWAYS VISIBLE ON HOME) ---
+    st.markdown('<div class="part-label">LISTA TRENINGÓW</div>', unsafe_allow_html=True)
+    if not day_workouts:
+        st.markdown('<div style="color: #444; font-size: 14px; padding: 10px;">Brak zaplanowanych treningów</div>', unsafe_allow_html=True)
+    else:
+        for workout in sorted(day_workouts, key=lambda x: x.get('hour', 0)):
+            # Find the hour for this workout (stored in the key (date, hour) in schedule_data)
+            # But day_workouts is a list of values. We need the keys too.
+            pass # We'll refactor this to get hour correctly
+        
+        # Correct way to get day workouts with hours:
+        for (d, h), v in st.session_state.schedule_data.items():
+            if d == d_str_today and v['status'] == 'active':
+                st.markdown(f"""
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;" data-action="action=open_event&client={v['name']}&hour={h}&day={d}">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 10px; color: #31d5f2; font-weight: 800;">{h}:00</div>
+                                <div style="font-size: 14px; font-weight: 700; color: white;">{v['name']}</div>
+                            </div>
+                            <div style="font-size: 10px; color: #8b949e;">{v['type']}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
     # NOW we hide the Bento Tiles on Mobile
     st.markdown('<div class="mobile-sidebar-content">', unsafe_allow_html=True)
     bento_tile("ADMINISTRACJA", "Dodaj dane", "Treningi i pomiary", "tile_add_data_1778074195381.png", "add_data")
@@ -928,6 +957,7 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
+        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
         col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
         with col_hdr1:
             st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
@@ -992,6 +1022,7 @@ with col_main:
                 full_html += '</div>'
             full_html += '</div>'
             st.markdown(full_html, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True) # Close desktop-only
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
 
