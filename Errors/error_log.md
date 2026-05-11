@@ -28,3 +28,7 @@ Niniejszy plik służy jako baza wiedzy o unikalnych problemach technicznych nap
 - **Problem**: Użytkownik nie mógł zapisać samego faktu odbycia treningu w kalendarzu bez wybrania konkretnych ćwiczeń.
 - **Przyczyna**: Kod wymagał, aby `st.session_state.add_data_exercises` nie było puste.
 - **Rozwiązanie**: Usunięto warunek blokujący, pozwalając na zapisywanie zdarzeń kalendarzowych nawet z pustą listą ćwiczeń.
+## 6. Stylizacja "owalu" w listach rozwijalnych
+- **Problem**: Opcje w listach rozwijalnych (np. wybór godziny) stały się wąskimi owalami zamiast prostokątów.
+- **Przyczyna**: Styl CSS dla zaznaczenia (`aria-selected="true"`) posiadał `border-radius: 50%` bez odpowiedniego zawężenia selektora do kalendarza. Streamlit używa tego samego atrybutu ARIA dla list rozwijalnych.
+- **Rozwiązanie**: Zawężono selektor okrągły wyłącznie do kalendarza (`[data-baseweb="calendar"] [aria-selected="true"]`) i zdefiniowano osobny styl prostokątny dla list (`[role="listbox"] [aria-selected="true"]`).

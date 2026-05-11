@@ -324,16 +324,14 @@ def local_css():
     }
 
     /* --- KOD FIX DLA KALENDARZA "DATA" --- */
-    /* 1. Całkowite wyczyszczenie tła popovera i kalendarza */
-    [data-baseweb="popover"], 
-    [data-baseweb="calendar"],
-    [role="grid"] {
+    /* 1. Panel i tło */
+    [data-baseweb="popover"], [data-baseweb="calendar"], [role="grid"] {
         background-color: #0d1117 !important;
         background: #0d1117 !important;
         border-radius: 20px !important;
     }
 
-    /* 2. USUNIĘCIE BIAŁYCH BLOKÓW (Kluczowa poprawka) */
+    /* 2. SIŁOWE USUNIĘCIE BIAŁYCH PROSTOKĄTÓW */
     [data-baseweb="calendar"] [role="gridcell"],
     [data-baseweb="calendar"] [role="gridcell"] > div {
         background-color: transparent !important;
@@ -341,13 +339,7 @@ def local_css():
         border: none !important;
     }
 
-    /* 3. Ukrycie dni z poprzedniego/następnego miesiąca */
-    [aria-disabled="true"] {
-        visibility: hidden !important;
-        opacity: 0 !important;
-    }
-
-    /* 4. STYLIZACJA WYBRANEGO DNIA (Błękitny Glow) */
+    /* 3. STYLIZACJA WYBRANEGO DNIA (Tylko w kalendarzu!) */
     [data-baseweb="calendar"] [aria-selected="true"] {
         background-color: #31d5f2 !important;
         color: #0d1117 !important;
@@ -361,6 +353,15 @@ def local_css():
         font-weight: 700 !important;
     }
 
+    /* 4. STYLIZACJA LISTY ROZWIJANEJ (Selectbox) - Naprawa "Ovalu" */
+    [role="listbox"] [aria-selected="true"],
+    [role="option"][aria-selected="true"] {
+        background-color: #31d5f2 !important;
+        color: #0d1117 !important;
+        border-radius: 8px !important; /* Prostokątny z lekkim zaokrągleniem */
+        box-shadow: none !important;   /* Brak poświaty dla listy */
+    }
+
     /* 5. Kolory tekstu i ikon */
     [data-baseweb="calendar"] header, 
     [data-baseweb="calendar"] select {
@@ -368,14 +369,9 @@ def local_css():
         background-color: transparent !important;
     }
 
-    [data-baseweb="calendar"] svg {
-        fill: #31d5f2 !important;
-    }
-
-    /* Kolor nazw dni (Mo, Tu, We...) */
-    [data-baseweb="calendar"] [role="gridcell"] {
-        color: #8b949e !important;
-    }
+    [data-baseweb="calendar"] svg { fill: #31d5f2 !important; }
+    [data-baseweb="calendar"] [role="gridcell"] { color: #8b949e !important; }
+    [aria-disabled="true"] { visibility: hidden !important; opacity: 0 !important; }
 
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
