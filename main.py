@@ -304,6 +304,12 @@ if (!parentDoc.getElementById('injected-global-script')) {
             document.body.setAttribute('data-drag-bound', 'true');
             
             document.body.addEventListener('click', (e) => {
+                const actionEl = e.target.closest('[data-action]');
+                if (actionEl) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
+                    return;
+                }
                 const stopEl = e.target.closest('[data-action-stop]');
                 if (stopEl) {
                     e.stopPropagation(); 
@@ -312,13 +318,7 @@ if (!parentDoc.getElementById('injected-global-script')) {
                         e.preventDefault();
                         window.sendActionToStreamlit(action);
                     }
-                    // If it's "true", we just stopped propagation to avoid parent triggers
                     return;
-                }
-                const actionEl = e.target.closest('[data-action]');
-                if (actionEl) {
-                    e.preventDefault();
-                    window.sendActionToStreamlit(actionEl.getAttribute('data-action'));
                 }
             });
             
