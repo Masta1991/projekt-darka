@@ -89,8 +89,12 @@ class DataHandler:
                 if not all_values or len(all_values) < 2:
                     return {}
                 
+                # Build a flattened list of all known exercises for matching
+                all_known_ex = []
+                for ex_list in EXERCISES_DATA.values():
+                    all_known_ex.extend(ex_list)
+
                 results = {}
-                # Normalize search parameters
                 search_client = str(client).strip().lower()
                 search_date = date_str.replace('/', '-').strip()
                 
@@ -101,16 +105,24 @@ class DataHandler:
                     row_client = str(row[1]).strip().lower()
                     
                     if row_client == search_client and search_date in row_ts:
-                        # Decode and clean exercise name
-                        ex_name = urllib.parse.unquote(str(row[2])).strip()
-                        try:
-                            weight_str = str(row[3]).replace(',', '.').strip()
-                            weight = float(weight_str)
-                        except:
-                            weight = 0.0
+                        # 1. Clean and decode the name from sheet
+                        sheet_ex = urllib.parse.unquote(str(row[2])).strip().lower()
                         
-                        if ex_name:
-                            results[ex_name] = weight
+                        # 2. Try to find the closest match in our app's exercise list
+                        matched_ex = None
+                        for known_ex in all_known_ex:
+                            k_low = known_ex.lower()
+                            if sheet_ex == k_low or sheet_ex in k_low or k_low in sheet_ex:
+                                matched_ex = known_ex
+                                break
+                        
+                        if matched_ex:
+                            try:
+                                weight_str = str(row[3]).replace(',', '.').strip()
+                                weight = float(weight_str)
+                            except:
+                                weight = 0.0
+                            results[matched_ex] = weight
                 return results
             except Exception:
                 return {}
