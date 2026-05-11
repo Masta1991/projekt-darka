@@ -591,6 +591,8 @@ if js_data and js_data != st.session_state.get('last_js_data_action', ''):
 if 'show_mobile_menu' not in st.session_state:
     st.session_state.show_mobile_menu = False
 
+sel_date = st.session_state.get('selected_date', datetime.date.today())
+
 def render_sidebar_tiles():
     st.markdown('<div class="part-label">MENU</div>', unsafe_allow_html=True)
     
