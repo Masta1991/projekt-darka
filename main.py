@@ -134,28 +134,26 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
     except: pass
 
 def check_password():
+    # Priority 1: Check if already authenticated via session/JS bridge
+    if st.session_state.get('authenticated'):
+        return True
+
     def password_entered():
         try:
             access_code = st.secrets.get("access_code", "170491")
         except:
             access_code = "170491"
         if st.session_state["password"] == access_code:
-            # First, save to localStorage via JS
             st.session_state.save_session_now = True
-            # We don't set authenticated=True yet, JS will reload the page
             del st.session_state["password"]
         else:
             st.error("❌ Błędny kod dostępu")
 
     if st.session_state.get('save_session_now'):
-        components.html(f"""
-            <script>
-            window.parent.localStorage.setItem('trainer_auth_ts', Date.now());
-            window.parent.location.reload();
-            </script>
-        """, height=0)
+        components.html(f"<script>window.parent.localStorage.setItem('trainer_auth_ts', Date.now()); window.parent.location.reload();</script>", height=0)
         st.stop()
-        st.markdown("""
+
+    st.markdown("""
         <style>
             .block-container { padding-top: 3rem !important; }
             /* === LARGE PASSWORD INPUT === */
