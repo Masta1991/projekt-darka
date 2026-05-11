@@ -536,19 +536,23 @@ window.parent.sendActionToStreamlit = function(actionStr) {{
     }}
 }};
 
-// 4. Listeners (Re-binding safely)
-doc.body.setAttribute('data-bridge-v3', 'true');
-// Use a global click handler that doesn't duplicate
-if (!window.parent.hasTrainerClick) {{
-    window.parent.hasTrainerClick = true;
-    doc.body.addEventListener('click', (e) => {{
-        const btn = e.target.closest('[data-action]');
-        if(btn) {{ 
-            e.preventDefault(); 
-            if (window.parent.sendActionToStreamlit) window.parent.sendActionToStreamlit(btn.getAttribute('data-action')); 
+// 4. Listeners (Re-binding with cleanup to prevent stale closures)
+if (window.parent.trainerClickHandler) {
+    doc.body.removeEventListener('click', window.parent.trainerClickHandler);
+}
+
+window.parent.trainerClickHandler = (e) => {{
+    const btn = e.target.closest('[data-action]');
+    if(btn) {{ 
+        e.preventDefault(); 
+        if (window.parent.sendActionToStreamlit) {{
+            window.parent.sendActionToStreamlit(btn.getAttribute('data-action'));
         }}
-    }});
-}}
+    }}
+}};
+
+doc.body.addEventListener('click', window.parent.trainerClickHandler);
+doc.body.setAttribute('data-bridge-v4', 'true');
 </script>
 """, height=0)
 
