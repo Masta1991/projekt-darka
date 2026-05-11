@@ -27,10 +27,16 @@ def check_password():
             access_code = "170491"
         if st.session_state["password"] == access_code:
             st.session_state.authenticated = True
+            st.session_state.save_session_now = True
             del st.session_state["password"]
             st.rerun()
         else:
             st.error("❌ Błędny kod dostępu")
+
+    # Save session to localStorage after successful login
+    if st.session_state.get('save_session_now'):
+        st.session_state.save_session_now = False
+        components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
     st.markdown("""
     <style>
@@ -264,7 +270,6 @@ def get_pl_date(d):
     return f"{days_pl[d.weekday()]}, {d.day} {months[d.month-1]}"
 
 # --- State ---
-@st.cache_resource
 def get_global_schedule():
     clients_pool = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
     exercises = ["Nogi", "Klatka piersiowa", "Plecy", "Barki", "FBW", "Mobilizacja", "Cardio", "Pośladki"]
@@ -290,6 +295,9 @@ if st.query_params.get("edit_mode") == "1":
 
 def toggle_edit():
     st.session_state.edit_mode = not st.session_state.edit_mode
+
+def clear_schedule():
+    st.session_state.schedule_data = {}
 
 # --- Actions via Hidden Input ---
 js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
@@ -317,6 +325,8 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         elif action == "nav":
             page = parts.get('page', 'home')
             st.session_state.page = page
+        elif action == "auto_login":
+            st.session_state.authenticated = True
     except Exception as e:
         print(f"Action error: {e}")
     st.rerun()
@@ -535,6 +545,18 @@ with col_main:
                 else:
                     st.error("Wybierz przynajmniej jedno ćwiczenie!")
 
+    elif st.session_state.page == "settings":
+        st.markdown('<div class="header-section"><div class="page-title">⚙️ Konfiguracja</div></div>', unsafe_allow_html=True)
+        st.markdown('---')
+        st.subheader("🗑️ Zarządzanie danymi")
+        st.warning("Uwaga: ta operacja usunie wszystkie wpisy z kalendarza.")
+        if st.button("🗑️ WYCZYŚĆ CAŁY GRAFIK", use_container_width=True):
+            clear_schedule()
+            st.success("Grafik wyczyszczony!")
+            time.sleep(1)
+            st.rerun()
+        st.markdown('---')
+        if st.button("⬅️ POWRÓT"): st.session_state.page = "home"; st.rerun()
     else:
         st.markdown(f"Sekcja {st.session_state.page} w budowie...")
         if st.button("POWRÓT"): st.session_state.page = "home"; st.rerun()
@@ -625,6 +647,15 @@ if (!parentDoc.getElementById('injected-global-script')) {
         }
     `;
     parentDoc.body.appendChild(s);
+}
+
+// Auto-login check via localStorage
+if (!window._authChecked) {
+    window._authChecked = true;
+    const authTs = parentDoc.defaultView.localStorage.getItem('trainer_auth_ts');
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+        sendActionToStreamlit('action=auto_login');
+    }
 }
 
 // Make sendActionToStreamlit available in parent scope
