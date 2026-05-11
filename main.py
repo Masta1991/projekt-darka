@@ -466,14 +466,24 @@ if (!doc.getElementById(styleId)) {{
             background-color: #1c1c1e !important;
             color: white !important;
         }}
-        [aria-selected="true"], [aria-selected="true"] * {{
-            background-color: #31d5f2 !important;
-            color: black !important;
-        }}
-        div[role="gridcell"] *, div[role="gridcell"] {{
+        /* Kill white blocks in grid */
+        [role="gridcell"], [role="gridcell"] *, [role="gridcell"] > div {{
             background-color: transparent !important;
+            background: transparent !important;
+        }}
+        /* Selection Blue Circle */
+        [aria-selected="true"], 
+        [aria-selected="true"] *, 
+        [aria-selected="true"] > div,
+        [aria-selected="true"] button {{
+            background-color: #31d5f2 !important;
+            background: #31d5f2 !important;
+            color: black !important;
+            border-radius: 50% !important;
         }}
         div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
+        /* Header specific */
+        div[data-baseweb="calendar"] header {{ background: #1c1c1e !important; }}
     `;
     doc.head.appendChild(s);
 }}
