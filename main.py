@@ -1,3 +1,8 @@
+# --- ZASADA PRACY ---
+# Zmieniaj TYLKO to, o co prosi użytkownik. 
+# Jeśli zmiana wymaga modyfikacji innej części kodu, zapytaj o pozwolenie przed jej wprowadzeniem.
+# --------------------
+
 import streamlit as st
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
 import pandas as pd

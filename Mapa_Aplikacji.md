@@ -21,7 +21,7 @@ Niniejszy dokument definiuje standardowe nazewnictwo elementów interfejsu użyt
 
 ---
 
-## Inne Widoki (Globalne)
-- **Top Header**: Pasek z ikoną użytkownika i nazwą widoku (np. 📝 Rejestracja Treningu).
-- **Mostek JS (Bridge)**: System komunikacji między interfejsem a silnikiem Streamlit.
-- **Tło Główne**: Ciemny motyw (Dark Premium) z tłem `#0d1117` / `#1c1c1e`.
+## Zasady Współpracy
+1. **Precyzja zmian**: Zmieniamy TYLKO ten element, o który prosi użytkownik.
+2. **Autoryzacja zmian pośrednich**: Jeśli wykonanie prośby wymaga modyfikacji innej części kodu (nieobjętej prośbą), AI ma obowiązek zapytać o pozwolenie przed wprowadzeniem tych zmian.
+3. **Nazewnictwo**: Zawsze używamy nazw z powyższej tabeli (np. "Lista Podopieczny" zamiast "Selectbox").
