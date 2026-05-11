@@ -419,10 +419,20 @@ def local_css():
     .tool-btn.active { background: rgba(49, 213, 242, 0.15); border-color: #31d5f2; color: #31d5f2; }
     .tool-btn.edit-on { background: rgba(255, 69, 58, 0.15); border-color: #ff453a; color: #ff453a; }
 
+    /* MOBILE MENU OVERLAY */
+    .mobile-menu-active {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: #0d1117;
+        z-index: 9999;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
     @media (max-width: 900px) {
         .mobile-toolbar { display: grid; }
         .desktop-only { display: none !important; }
-        .mobile-header { display: none !important; } /* Hide old header */
+        .mobile-header { display: none !important; }
     }
 
     /* LANDSCAPE OPTIMIZATION (Mobile Horizontal) */
@@ -627,21 +637,21 @@ def render_sidebar_tiles():
 
 # Standard Layout Logic
 if st.session_state.is_mobile and st.session_state.show_mobile_menu:
-    # MOBILE MENU OVERLAY
-    st.markdown("""
-        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:10000; padding:20px; backdrop-filter:blur(10px);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                <h2 style="margin:0; color:#31d5f2; letter-spacing:2px;">MENU</h2>
-                <div data-action="action=close_menu" style="background:#ff453a; color:white; padding:10px 15px; border-radius:12px; font-weight:800; cursor:pointer;">ZAMKNIJ ✕</div>
-            </div>
-    """, unsafe_allow_html=True)
+    # MOBILE MENU OVERLAY (Streamlit-native)
+    st.markdown('<div class="mobile-menu-active">', unsafe_allow_html=True)
+    st.markdown('<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding:10px;">'
+                '<h2 style="margin:0; color:#31d5f2; letter-spacing:2px;">MENU</h2>'
+                '<div data-action="action=close_menu" style="background:#ff453a; color:white; padding:10px 15px; border-radius:12px; font-weight:800; cursor:pointer;">ZAMKNIJ ✕</div>'
+                '</div>', unsafe_allow_html=True)
     render_sidebar_tiles()
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Handle Close Action from Menu
-    if 'action=close_menu' in st.session_state.get('last_js_data_action', ''):
+    js_action = st.session_state.get('last_js_data_action', '')
+    if 'action=close_menu' in js_action:
         st.session_state.show_mobile_menu = False
-        st.session_state.last_js_data_action = ""; st.rerun()
+        st.session_state.last_js_data_action = ""
+        st.rerun()
     st.stop()
 
 if st.session_state.is_mobile:
@@ -673,19 +683,20 @@ if st.session_state.is_mobile:
         </div>
     """, unsafe_allow_html=True)
     
-    # Handle mobile actions
+    # Handle mobile actions (More robust parsing)
     js_action = st.session_state.get('last_js_data_action', '')
-    if 'action=toggle_menu' in js_action:
-        st.session_state.show_mobile_menu = not st.session_state.show_mobile_menu
-        st.session_state.last_js_data_action = ""; st.rerun()
-    elif 'action=set_view' in js_action:
-        # Extract view value from action string e.g. action=set_view&v=dzień
-        new_view = "dzień" if "v=dzień" in js_action else "tydzień"
-        st.session_state.calendar_view = new_view
-        st.session_state.last_js_data_action = ""; st.rerun()
-    elif 'action=set_edit' in js_action:
-        st.session_state.edit_mode = not st.session_state.edit_mode
-        st.session_state.last_js_data_action = ""; st.rerun()
+    if js_action:
+        if 'action=toggle_menu' in js_action:
+            st.session_state.show_mobile_menu = not st.session_state.show_mobile_menu
+        elif 'v=dzień' in js_action:
+            st.session_state.calendar_view = 'dzień'
+        elif 'v=tydzień' in js_action:
+            st.session_state.calendar_view = 'tydzień'
+        elif 'action=set_edit' in js_action:
+            st.session_state.edit_mode = not st.session_state.edit_mode
+        
+        st.session_state.last_js_data_action = ""
+        st.rerun()
         
     col_main = st.container()
 else:
