@@ -15,35 +15,29 @@ st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="w
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- Auto-login check (MUST run before check_password) ---
-components.html("""
-<script>
-if (!window._autoLoginSent) {
-    window._autoLoginSent = true;
-    const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
-    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-        const parentDoc = window.parent.document;
-        const input = parentDoc.querySelector('input[aria-label="js_data_exchange"]');
-        if (input) {
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-            setter.call(input, 'action=auto_login&ts=' + Date.now());
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    }
-}
-</script>
-""", height=0)
-
-# --- Hidden JS data input (for auto-login) ---
-js_data_early = st.text_input("js_data_exchange", label_visibility="collapsed", key="js_data_exchange")
-if js_data_early and 'auto_login' in js_data_early:
-    st.session_state.authenticated = True
-
 # --- Authentication ---
 def check_password():
     if st.session_state.get('authenticated'):
         return True
+
+    # Check localStorage for valid session (renders invisible iframe)
+    components.html("""
+    <script>
+    const authTs = window.parent.localStorage.getItem('trainer_auth_ts');
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
+        // Valid session found - reload with auth flag
+        if (!window.parent.location.search.includes('auto_auth=1')) {
+            window.parent.location.href = window.parent.location.pathname + '?auto_auth=1';
+        }
+    }
+    </script>
+    """, height=0)
+
+    # Check auto_auth query param
+    if st.query_params.get("auto_auth") == "1":
+        st.session_state.authenticated = True
+        st.query_params.clear()
+        st.rerun()
 
     def password_entered():
         try:
@@ -52,16 +46,12 @@ def check_password():
             access_code = "170491"
         if st.session_state["password"] == access_code:
             st.session_state.authenticated = True
-            st.session_state.save_session_now = True
+            # Save to localStorage
+            components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
             del st.session_state["password"]
             st.rerun()
         else:
             st.error("❌ Błędny kod dostępu")
-
-    # Save session to localStorage after successful login
-    if st.session_state.get('save_session_now'):
-        st.session_state.save_session_now = False
-        components.html('<script>window.parent.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
     st.markdown("""
     <style>
@@ -332,7 +322,7 @@ def clear_schedule():
     st.session_state.schedule_data = {}
 
 # --- Actions via Hidden Input ---
-js_data = js_data_early  # Use the input from the top of the file
+js_data = st.text_input("js_data_exchange", label_visibility="collapsed")
 if js_data and js_data != st.session_state.get('last_js_data', ''):
     st.session_state.last_js_data = js_data
     try:
@@ -357,8 +347,6 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         elif action == "nav":
             page = parts.get('page', 'home')
             st.session_state.page = page
-        elif action == "auto_login":
-            st.session_state.authenticated = True
     except Exception as e:
         print(f"Action error: {e}")
     st.rerun()
