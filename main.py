@@ -456,36 +456,50 @@ st.components.v1.html(f"""
 <script>
 const doc = window.parent.document;
 
-// 1. Theme CSS Injection
+// 1. Theme CSS Injection (Forced Update)
 const styleId = 'trainer-pro-global-css';
-if (!doc.getElementById(styleId)) {{
-    const s = doc.createElement('style');
-    s.id = styleId;
-    s.innerHTML = `
-        div[data-baseweb="popover"] *, div[data-baseweb="calendar"] *, [role="listbox"] * {{
-            background-color: #1c1c1e !important;
-            color: white !important;
-        }}
-        /* Kill white blocks in grid */
-        [role="gridcell"], [role="gridcell"] *, [role="gridcell"] > div {{
-            background-color: transparent !important;
-            background: transparent !important;
-        }}
-        /* Selection Blue Circle */
-        [aria-selected="true"], 
-        [aria-selected="true"] *, 
-        [aria-selected="true"] > div,
-        [aria-selected="true"] button {{
-            background-color: #31d5f2 !important;
-            background: #31d5f2 !important;
-            color: black !important;
-            border-radius: 50% !important;
-        }}
-        div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
-        /* Header specific */
-        div[data-baseweb="calendar"] header {{ background: #1c1c1e !important; }}
-    `;
-    doc.head.appendChild(s);
+let existing = doc.getElementById(styleId);
+if (existing) existing.remove();
+const s = doc.createElement('style');
+s.id = styleId;
+s.innerHTML = `
+    div[data-baseweb="popover"] *, div[data-baseweb="calendar"] *, [role="listbox"] * {{
+        background-color: #1c1c1e !important;
+        color: white !important;
+    }}
+    /* Kill white blocks in grid */
+    [role="gridcell"], [role="gridcell"] *, [role="gridcell"] > div {{
+        background-color: transparent !important;
+        background: transparent !important;
+    }}
+    /* Selection Blue Circle */
+    [aria-selected="true"], 
+    [aria-selected="true"] *, 
+    [aria-selected="true"] > div,
+    [aria-selected="true"] button {{
+        background-color: #31d5f2 !important;
+        background: #31d5f2 !important;
+        color: black !important;
+        border-radius: 50% !important;
+    }}
+    div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
+    /* Header specific */
+    div[data-baseweb="calendar"] header {{ background: #1c1c1e !important; }}
+`;
+doc.head.appendChild(s);
+
+// 2. Continuous Theme Observer
+if (!window.parent.observerActive) {{
+    window.parent.observerActive = true;
+    const observer = new MutationObserver(() => {{
+        const cells = doc.querySelectorAll('[role="gridcell"] > div');
+        cells.forEach(c => {{
+            if (!c.getAttribute('aria-selected')) c.style.backgroundColor = 'transparent';
+        }});
+        const popovers = doc.querySelectorAll('[data-baseweb="popover"]');
+        popovers.forEach(p => {{ p.style.backgroundColor = '#1c1c1e'; }});
+    }});
+    observer.observe(doc.body, {{ childList: true, subtree: true }});
 }}
 
 // 2. Action Bridge
