@@ -482,6 +482,50 @@ function sendActionToStreamlit(actionStr) {
     }
 }
 
+if (!parentDoc.getElementById('injected-global-styles')) {
+    const style = parentDoc.createElement('style');
+    style.id = 'injected-global-styles';
+    style.innerHTML = `
+        /* Top-level global fixes for Streamlit widgets */
+        div[data-baseweb="calendar"], 
+        div[data-baseweb="calendar"] header,
+        div[data-baseweb="calendar"] div[role="grid"],
+        div[data-baseweb="calendar"] div[role="presentation"],
+        div[data-baseweb="popover"] div[role="dialog"] {
+            background-color: #1c1c1e !important;
+            background: #1c1c1e !important;
+            color: white !important;
+        }
+        div[data-baseweb="calendar"] button { color: white !important; }
+        div[data-baseweb="calendar"] svg { fill: #31d5f2 !important; }
+        
+        /* Selected and Hover states */
+        div[data-baseweb="calendar"] div[aria-selected="true"] {
+            background-color: #31d5f2 !important;
+            color: #000 !important;
+            border-radius: 50% !important;
+        }
+        div[data-baseweb="calendar"] div[role="gridcell"]:hover {
+            background-color: rgba(49, 213, 242, 0.2) !important;
+            border-radius: 50% !important;
+        }
+        
+        /* Weekday labels */
+        div[data-baseweb="calendar"] div[role="grid"] > div:first-child > div {
+            color: #8b949e !important;
+            background: transparent !important;
+        }
+
+        /* Selectbox dropdowns */
+        div[data-baseweb="popover"], div[data-baseweb="menu"], [role="listbox"] {
+            background-color: #1c1c1e !important;
+            color: white !important;
+            border: 1px solid rgba(49, 213, 242, 0.3) !important;
+        }
+    `;
+    parentDoc.head.appendChild(style);
+}
+
 if (!parentDoc.getElementById('injected-global-script')) {
     const s = parentDoc.createElement('script');
     s.id = 'injected-global-script';
