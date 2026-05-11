@@ -1,5 +1,6 @@
 import streamlit as st
 st.set_page_config(page_title="Trainer App v1.0", page_icon="🏋️", layout="wide", initial_sidebar_state="collapsed")
+st.error("!!! UWAGA: KOD ZOSTAŁ ZAKTUALIZOWANY - JEŚLI TO WIDZISZ, ZMIANY DZIAŁAJĄ !!!")
 import pandas as pd
 import datetime
 import base64
@@ -623,7 +624,7 @@ if (!parentDoc.getElementById('injected-global-script')) {
 parentDoc.defaultView.sendActionToStreamlit = sendActionToStreamlit;
 </script>
 """
-components.html(js_bridge, height=0, width=0)
+st.markdown(js_bridge, unsafe_allow_html=True)
 
 # --- State Initialization ---
 if "authenticated" not in st.session_state:
