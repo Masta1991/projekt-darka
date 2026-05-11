@@ -509,18 +509,30 @@ if (existing) existing.remove();
 const s = doc.createElement('style');
 s.id = styleId;
 s.innerHTML = `
-    div[data-baseweb="popover"] *, div[data-baseweb="calendar"] *, [role="listbox"] * {{
-        background-color: #1c1c1e !important;
-        color: white !important;
+    /* ATOMOWY FIX - PORTAL SYNC */
+    [data-baseweb="popover"], [data-baseweb="calendar"], [role="grid"] {{
+        background-color: #0d1117 !important;
+        border-radius: 20px !important;
+        border: none !important;
     }}
-    /* Kill white blocks in grid */
-    [role="gridcell"], [role="gridcell"] *, [role="gridcell"] > div {{
+    [data-baseweb="calendar"] * {{
         background-color: transparent !important;
-        background: transparent !important;
+    }}
+    [data-baseweb="calendar"] [aria-disabled="true"] {{
+        visibility: hidden !important;
+    }}
+    [data-baseweb="calendar"] [aria-selected="true"],
+    [data-baseweb="calendar"] [aria-selected="true"] * {{
+        background-color: #31d5f2 !important;
+        color: #0d1117 !important;
+        border-radius: 50% !important;
+        box-shadow: 0 0 15px rgba(49, 213, 242, 0.8) !important;
     }}
     div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
-    /* Header specific */
-    div[data-baseweb="calendar"] header {{ background: #1c1c1e !important; }}
+    div[data-baseweb="calendar"] header, div[data-baseweb="calendar"] header * {{ 
+        color: white !important; 
+        background: transparent !important;
+    }}
 `;
 doc.head.appendChild(s);
 
