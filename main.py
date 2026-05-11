@@ -536,37 +536,58 @@ s.innerHTML = `
 `;
 doc.head.appendChild(s);
 
-// 2. Calendar Style Enforcer (setInterval - avoids MutationObserver infinite loop)
+// 2. Calendar Style Enforcer (surgical - avoids infinite loops)
 if (window.parent.trainerInterval) clearInterval(window.parent.trainerInterval);
 window.parent.trainerInterval = setInterval(() => {{
-    // Fix popover & calendar backgrounds
+    const calendar = doc.querySelector('[data-baseweb="calendar"]');
+    if (!calendar) return;
+
+    // 1. Force background on popover containers
     doc.querySelectorAll('[data-baseweb="popover"]').forEach(p => {{
-        p.style.cssText += '; background-color: #0d1117 !important; border-radius: 20px !important; border: none !important;';
+        p.style.setProperty('background-color', '#0d1117', 'important');
+        p.style.setProperty('border-radius', '20px', 'important');
     }});
-    doc.querySelectorAll('[data-baseweb="calendar"]').forEach(cal => {{
-        cal.style.cssText += '; background-color: #0d1117 !important;';
-    }});
-    doc.querySelectorAll('[role="grid"]').forEach(g => {{
-        g.style.cssText += '; background-color: #0d1117 !important;';
-    }});
-    // Kill ALL white blocks inside calendar
-    doc.querySelectorAll('[data-baseweb="calendar"] [role="gridcell"] > div').forEach(c => {{
-        if (!c.closest('[aria-selected="true"]')) {{
-            c.style.cssText += '; background-color: transparent !important; background: transparent !important;';
+
+    // 2. Fix all grid cells - make them transparent except the selected one
+    calendar.querySelectorAll('[role="gridcell"]').forEach(cell => {{
+        const isSelected = cell.getAttribute('aria-selected') === 'true';
+        const innerDiv = cell.querySelector('div');
+        const button = cell.querySelector('button');
+
+        if (isSelected) {{
+            // Force blue solid circle
+            cell.style.setProperty('background-color', 'transparent', 'important'); // cell itself transparent
+            if (innerDiv) {{
+                innerDiv.style.setProperty('background-color', '#31d5f2', 'important');
+                innerDiv.style.setProperty('border-radius', '50%', 'important');
+                innerDiv.style.setProperty('color', '#0d1117', 'important');
+                innerDiv.style.setProperty('box-shadow', '0 0 15px rgba(49,213,242,0.8)', 'important');
+            }}
+            if (button) {{
+                button.style.setProperty('background-color', '#31d5f2', 'important');
+                button.style.setProperty('color', '#0d1117', 'important');
+                button.style.setProperty('border-radius', '50%', 'important');
+            }}
+        }} else {{
+            // Kill white strips - force transparency
+            cell.style.setProperty('background-color', 'transparent', 'important');
+            if (innerDiv) innerDiv.style.setProperty('background-color', 'transparent', 'important');
+            if (button) button.style.setProperty('background-color', 'transparent', 'important');
         }}
     }});
-    // Force blue circle on selected day
-    doc.querySelectorAll('[data-baseweb="calendar"] [aria-selected="true"]').forEach(sel => {{
-        sel.style.cssText += '; background-color: #31d5f2 !important; color: #0d1117 !important; border-radius: 50% !important; box-shadow: 0 0 15px rgba(49,213,242,0.8) !important;';
-        sel.querySelectorAll('div, button').forEach(ch => {{
-            ch.style.cssText += '; background-color: #31d5f2 !important; color: #0d1117 !important;';
-        }});
+
+    // 3. Fix headers and arrows
+    calendar.querySelectorAll('header, header *').forEach(h => {{
+        h.style.setProperty('color', 'white', 'important');
+        h.style.setProperty('background-color', 'transparent', 'important');
     }});
-    // Hide disabled/empty days
-    doc.querySelectorAll('[data-baseweb="calendar"] [aria-disabled="true"]').forEach(d => {{
-        d.style.cssText += '; visibility: hidden !important;';
+    calendar.querySelectorAll('svg').forEach(s => s.style.setProperty('fill', '#31d5f2', 'important'));
+
+    // 4. Hide disabled days
+    calendar.querySelectorAll('[aria-disabled="true"]').forEach(d => {{
+        d.style.setProperty('visibility', 'hidden', 'important');
     }});
-}}, 300);
+}}, 250);
 
 // 3. Action Bridge
 window.parent.sendActionToStreamlit = function(actionStr) {{
