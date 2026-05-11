@@ -771,8 +771,20 @@ with col_main:
 
         col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
-            clients = ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
-            klient = st.selectbox("Podopieczny", clients, index=clients.index(q_client) if q_client in clients else 0)
+        # Fetch clients from Google Sheets with caching
+        @st.cache_data(ttl=600)
+        def get_clients_list():
+            try:
+                df_c = st.session_state.dh.fetch_clients()
+                if not df_c.empty:
+                    # First column is assumed to be the client name
+                    return df_c.iloc[:, 0].astype(str).tolist()
+            except Exception:
+                pass
+            return ["Jan Kowalski", "Anna Nowak", "Piotr Zieliński", "Marek Murator", "Ania"]
+
+        clients = get_clients_list()
+        klient = st.selectbox("Podopieczny", clients, index=clients.index(q_client) if q_client in clients else 0)
         with col_d:
             train_date = st.date_input("Data", value=datetime.datetime.strptime(q_day_str, "%Y-%m-%d").date() if q_day_str else st.session_state.selected_date)
         with col_h:
