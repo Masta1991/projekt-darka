@@ -145,8 +145,6 @@ def local_css():
     @media (max-width: 900px) {
         .main-layout { flex-direction: column; gap: 15px; }
         .stColumn { width: 100% !important; flex: 1 1 auto !important; }
-        .calendar-wrapper { overflow-x: auto; padding: 10px; }
-        .calendar-row, .calendar-grid-header { min-width: 600px; }
         .tile-link { height: 80px; }
         .tile-title { font-size: 16px; }
     }
@@ -173,55 +171,72 @@ def local_css():
     .tile-title { font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 2px; }
     .tile-desc { font-size: 11px; color: #8b949e; line-height: 1.2; }
 
-    /* Calendar Premium Grid */
+    /* Calendar Premium Grid - EXCEL FREEZE PANES */
     .calendar-wrapper { 
-        margin-top: 10px; 
-        border: 1px solid #2d2d3a; 
-        border-radius: 12px; 
+        background: #1c1c1e; 
+        border-radius: 24px; 
+        border: 1px solid rgba(255,255,255,0.05); 
+        padding: 20px; 
         overflow: auto; 
         max-height: 75vh;
         position: relative;
     }
     .calendar-grid-header { 
         display: grid; 
-        grid-template-columns: 50px repeat(6, 1fr); 
-        background: #161b22; 
-        border-bottom: 1px solid #2d2d3a;
+        grid-template-columns: 60px repeat(6, 1fr); 
+        gap: 10px; 
+        margin-bottom: 15px;
         position: sticky;
-        top: 0;
+        top: -20px; /* Offset for wrapper padding */
         z-index: 100;
+        background: #1c1c1e;
+        padding: 10px 0;
     }
     .day-header { 
-        padding: 10px 5px; 
         text-align: center; 
-        font-weight: 700; 
         color: #8b949e; 
-        font-size: 11px;
-        background: #161b22;
+        font-size: 12px; 
+        font-weight: 600; 
+        text-transform: uppercase; 
+        letter-spacing: 1px;
     }
-    /* Fixed top-left corner */
+    .day-header.today { color: #31d5f2; }
+    
+    /* Freeze top-left corner */
     .day-header:first-child {
         position: sticky;
-        left: 0;
+        left: -20px;
         z-index: 101;
+        background: #1c1c1e;
     }
+
     .calendar-row { 
         display: grid; 
-        grid-template-columns: 50px repeat(6, 1fr); 
-        border-bottom: 1px solid #1f2128; 
+        grid-template-columns: 60px repeat(6, 1fr); 
+        gap: 10px; 
+        min-height: 80px; 
+        border-top: 1px solid rgba(255,255,255,0.03); 
     }
     .time-col { 
-        font-size: 10px; 
-        color: #484f58; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        background: #0d1117; 
-        border-right: 1px solid #1f2128; 
+        color: #444; 
+        font-size: 11px; 
+        font-weight: 700; 
+        padding-top: 10px; 
+        text-align: right; 
+        padding-right: 15px;
         position: sticky;
-        left: 0;
+        left: -20px;
         z-index: 90;
+        background: #1c1c1e;
     }
+    .calendar-cell { 
+        position: relative; 
+        border-radius: 12px; 
+        background: rgba(255,255,255,0.01); 
+        transition: background 0.2s; 
+        border: 1px solid transparent; 
+    }
+    .calendar-cell:hover { background: rgba(255,255,255,0.03); }
 
     /* Event Card */
     .event-card {
@@ -247,16 +262,7 @@ def local_css():
     .edit-mode-active .event-card { border-style: dashed; border-color: #31d5f2; cursor: move; }
     .edit-mode-active .delete-btn { opacity: 1; pointer-events: auto; }
     .edit-mode-active .event-card a { pointer-events: none; }
-    .edit-toggle-btn { background: rgba(49, 213, 242, 0.1); border: 1px solid #31d5f2; color: #31d5f2; padding: 5px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px; }
-    .edit-toggle-btn.active { background: #31d5f2; color: #0d1117; }
-
-    /* Deleted Excel Style */
-    .deleted-marker { position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid; border-width: 0 12px 12px 0; border-color: transparent #ff4b4b transparent transparent; z-index: 10; }
-    .deleted-info { display: none; position: absolute; top: 15px; right: 0; width: 150px; background: #2d2d30; border: 1px solid #ff4b4b; border-radius: 4px; padding: 8px; font-size: 10px; color: #ff4b4b; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .calendar-cell:hover .deleted-info { display: block; }
-    .add-btn { position: absolute; inset: 0; opacity: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 20px; }
-    .calendar-cell:hover .add-btn { opacity: 1; }
-
+    
     /* Fix global Streamlit primary button red color */
     .stButton > button[kind="primary"] {
         background-color: rgba(49,213,242, 0.8) !important;
@@ -270,16 +276,6 @@ def local_css():
     
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .block-container { padding: 1rem !important; }
-        .tile-title { font-size: 16px !important; }
-        .tile-desc { font-size: 11px !important; }
-        .page-title { font-size: 24px !important; }
-        .calendar-cell { min-width: 100px; }
-        /* Hide some desktop elements if needed */
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -467,14 +463,14 @@ with col_main:
                 if day_idx > 5: day_idx = 0 # Handle Sunday as Monday for display
                 week_dates = [sel_date]
                 days = [all_days_names[day_idx]]
-                grid_template = "50px 1fr"
+                grid_template = "60px 1fr"
             else:
                 week_dates = all_week_dates
                 days = all_days_names
-                grid_template = "50px repeat(6, 1fr)"
+                grid_template = "60px repeat(6, 1fr)"
             
             # Inject dynamic grid template for responsiveness
-            full_html += f'<style>.calendar-grid-header, .calendar-row {{ grid-template-columns: {grid_template} !important; }} @media (max-width: 768px) {{ .calendar-row {{ min-width: {"800px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} .calendar-grid-header {{ min-width: {"800px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} }} </style>'
+            full_html += f'<style>.calendar-grid-header, .calendar-row {{ grid-template-columns: {grid_template} !important; gap: 10px !important; }} @media (max-width: 768px) {{ .calendar-row {{ min-width: {"900px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} .calendar-grid-header {{ min-width: {"900px" if st.session_state.calendar_view == "tydzień" else "100%"}; }} }} </style>'
             
             full_html += '<div class="calendar-grid-header"><div class="day-header"></div>'
             for i, d_name in enumerate(days): 
