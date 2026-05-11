@@ -590,24 +590,21 @@ def local_css():
         .desktop-only { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
         .tile-link.desktop-only { display: none !important; }
         
-        /* Force hide bento menu block and any empty space from desktop elements */
-        div[data-testid="column"]:has(.desktop-only), 
+        /* Target ONLY the specific block containing desktop-only, not the whole column */
         div[data-testid="stVerticalBlock"] > div:has(.desktop-only),
         div[data-testid="stVerticalBlock"] > div:has(.mobile-sidebar-content) {
             display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
         }
 
-        /* Hide the specific duplicate buttons by their keys/labels */
+        /* Hide the specific duplicate buttons by their keys */
         div[data-testid="stButton"]:has(button[key*="v_day_btn"]),
         div[data-testid="stButton"]:has(button[key*="v_week_btn"]),
         div[data-testid="stButton"]:has(button[key*="v_edit_btn"]) {
             display: none !important;
         }
         
-        /* Remove Streamlit top padding and header */
         .block-container { padding-top: 0.5rem !important; }
         header[data-testid="stHeader"] { display: none !important; }
-        .main-layout { padding-top: 0 !important; }
     }
 
     /* Mobile Responsive */
