@@ -161,12 +161,79 @@ def local_css():
         background-color: rgba(49,213,242, 0.8) !important;
         color: #fff !important;
         border: 1px solid #31d5f2 !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        height: 50px !important;
     }
     .stButton > button[kind="primary"]:hover {
         background-color: #31d5f2 !important;
         color: #000 !important;
+        box-shadow: 0 0 20px rgba(49,213,242,0.4);
     }
     
+    /* Secondary Buttons Styling */
+    .stButton > button[kind="secondary"] {
+        background-color: #1c1c1e !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        height: 50px !important;
+        transition: all 0.3s ease;
+    }
+    .stButton > button[kind="secondary"]:hover {
+        border-color: #31d5f2 !important;
+        color: #31d5f2 !important;
+        background: #252528 !important;
+    }
+
+    /* Selectbox, Date Input, and Text Input Styling */
+    div[data-baseweb="select"] > div, 
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"] {
+        background-color: #1c1c1e !important;
+        color: white !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    
+    div[data-baseweb="select"]:hover, 
+    div[data-baseweb="input"]:hover {
+        border-color: #31d5f2 !important;
+    }
+
+    /* Widget Labels */
+    div[data-testid="stWidgetLabel"] p {
+        color: #8b949e !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Dropdown Menu Styling */
+    ul[data-baseweb="menu"] {
+        background-color: #1c1c1e !important;
+        border: 1px solid rgba(49, 213, 242, 0.3) !important;
+    }
+    li[data-baseweb="option"] {
+        color: white !important;
+        transition: background 0.2s;
+    }
+    li[data-baseweb="option"]:hover {
+        background-color: rgba(49, 213, 242, 0.1) !important;
+        color: #31d5f2 !important;
+    }
+
+    /* Date Picker Calendar Fix */
+    div[data-baseweb="calendar"] {
+        background-color: #1c1c1e !important;
+        color: white !important;
+    }
+    div[data-baseweb="calendar"] button {
+        color: white !important;
+    }
+
     /* Menu button styles (global) */
     .part-label { font-size: 18px; font-weight: 900; color: #31d5f2; text-transform: uppercase; margin: 30px 0 10px 0; }
 
