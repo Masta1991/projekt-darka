@@ -499,16 +499,6 @@ s.innerHTML = `
         background-color: transparent !important;
         background: transparent !important;
     }}
-    /* Selection Blue Circle */
-    [aria-selected="true"], 
-    [aria-selected="true"] *, 
-    [aria-selected="true"] > div,
-    [aria-selected="true"] button {{
-        background-color: #31d5f2 !important;
-        background: #31d5f2 !important;
-        color: black !important;
-        border-radius: 50% !important;
-    }}
     div[data-baseweb="calendar"] svg {{ fill: #31d5f2 !important; }}
     /* Header specific */
     div[data-baseweb="calendar"] header {{ background: #1c1c1e !important; }}
