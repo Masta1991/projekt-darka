@@ -320,10 +320,10 @@ def local_css():
     /* Event Card */
     .event-card {
         background: rgba(49, 213, 242, 0.1); border-left: 4px solid #31d5f2; border-radius: 8px;
-        padding: 8px 12px; height: calc(100% - 10px); margin: 5px; cursor: pointer;
+        padding: 5px 8px; height: calc(100% - 4px); margin: 2px; cursor: pointer;
         transition: all 0.2s; position: relative; user-select: none;
         display: flex; flex-direction: column; justify-content: center;
-        width: calc(100% - 10px); box-sizing: border-box;
+        width: calc(100% - 4px); box-sizing: border-box;
     }
     .event-card:hover { transform: translateY(-2px); background: rgba(49, 213, 242, 0.2); }
     .event-name { font-weight: 800; font-size: 13px; color: white; margin-bottom: 2px; }
