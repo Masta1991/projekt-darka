@@ -280,6 +280,7 @@ def local_css():
         font-size: 13px;
         color: #8b949e;
         background: #1c1c1e;
+        border-left: 1px solid rgba(255,255,255,0.03);
     }
     .day-header:first-child {
         position: sticky;
@@ -312,6 +313,7 @@ def local_css():
         position: relative; 
         transition: background 0.2s; 
         min-width: 120px; 
+        border-left: 1px solid rgba(255,255,255,0.03);
     }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
 
