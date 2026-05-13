@@ -39,3 +39,4 @@ Niniejszy dokument definiuje standardowe nazewnictwo elementów interfejsu użyt
 3. **Autoryzacja zmian pośrednich**: Jeśli wykonanie prośby wymaga modyfikacji innej części kodu (nieobjętej prośbą), AI ma obowiązek zapytać o pozwolenie przed wprowadzeniem tych zmian.
 4. **Nazewnictwo**: Zawsze używamy nazw z powyższej tabeli (np. "Lista Podopieczny" zamiast "Selectbox").
 5. **Identyfikacja**: W razie wątpliwości sprawdzamy tagi `[WIDOK: ...]` w komentarzach skryptu `main.py`.
+6. **Aktualizacja (Git)**: Po każdej wdrożonej zmianie, jeśli AI nie wykonuje synchronizacji automatycznie, musi dostarczyć użytkownikowi gotowy zestaw komend PowerShell do wysłania zmian do repozytorium (git add/commit/push).

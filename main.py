@@ -2,6 +2,9 @@
 # 1. Zmieniaj TYLKO to, o co prosi użytkownik. 
 # 2. PRZED każdą zmianą przedstaw propozycję i zapytaj o zgodę na wdrożenie.
 # 3. Jeśli zmiana wymaga modyfikacji innej części kodu, zapytaj o pozwolenie.
+# 4. Po zmianie podaj komendy GIT do aktualizacji aplikacji w chmurze.
+# 5. Zawsze używamy nazw z dokumentacji (np. "Lista Podopieczny" zamiast "Selectbox").
+# 6. W razie wątpliwości sprawdzamy tagi `[WIDOK: ...]` w komentarzach.
 # --------------------
 
 import streamlit as st
@@ -984,15 +987,15 @@ with col_main:
             v_day_active = "active" if st.session_state.calendar_view == "dzień" else ""
             v_week_active = "active" if st.session_state.calendar_view == "tydzień" else ""
             v_edit_active = "active" if st.session_state.edit_mode else ""
-            edit_label = "ZATWIERDZ" if st.session_state.edit_mode else "TRYB EDYCJI"
+            edit_label = "✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ"
             
             st.markdown(f"""
-                <div class="desktop-only" style="margin-bottom: 20px; border: 2px solid orange; padding: 5px; border-radius: 20px;">
+                <div class="desktop-only" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1c1e; padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                        <div style="color: #8b949e; font-size: 14px; font-weight: 600;">WIDOK TYGODNIA {st.session_state.selected_week} (TEST)</div>
+                        <div style="color: #8b949e; font-size: 14px; font-weight: 600;">WIDOK TYGODNIA {st.session_state.selected_week}</div>
                         <div style="display: flex; gap: 10px;">
-                            <div class="hdr-btn {v_day_active}" data-action="action=v_day">WIDOK DNIA</div>
-                            <div class="hdr-btn {v_week_active}" data-action="action=v_week">WIDOK TYG.</div>
+                            <div class="hdr-btn {v_day_active}" data-action="action=v_day">📱 DZIEŃ</div>
+                            <div class="hdr-btn {v_week_active}" data-action="action=v_week">📅 TYDZIEŃ</div>
                             <div class="hdr-btn {v_edit_active}" data-action="action=v_edit">{edit_label}</div>
                         </div>
                     </div>
