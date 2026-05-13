@@ -659,33 +659,47 @@ def local_css():
     }
     .mobile-only { display: none; }
     .desktop-only { display: block; }
-
-    /* Mobile Responsive */
     @media (max-width: 1000px) {
         .mobile-header { display: flex; }
-        .calendar-wrapper { padding: 10px; border-radius: 16px; min-width: unset !important; overflow-x: auto; }
-        /* Responsive columns based on view type */
+        .calendar-wrapper { padding: 5px; border-radius: 12px; min-width: unset !important; overflow-x: auto; }
+        
+        /* Strict column unification for mobile */
         .calendar-wrapper.view-week .calendar-grid-header, 
         .calendar-wrapper.view-week .calendar-row {
+            display: grid !important;
             grid-template-columns: 70px repeat(6, 100px) !important;
             gap: 0px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 670px !important; /* 70 + 600 */
         }
         
         .calendar-wrapper.view-day .calendar-grid-header, 
         .calendar-wrapper.view-day .calendar-row {
+            display: grid !important;
             grid-template-columns: 70px 1fr !important;
             gap: 0px !important;
-        }.block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         .exercise-row { height: 70px; padding: 0 15px; }
-        .pill-container { height: 44px; gap: 8px; }
-        .pill-btn { width: 28px; height: 28px; font-size: 18px; }
-        .pill-display { width: 40px; height: 40px; }
-        .pill-val { font-size: 13px; }
         
+        /* Force event cards to stay within columns on mobile */
+        .event-card {
+            width: calc(100% - 4px) !important;
+            margin: 2px !important;
+            padding: 4px 6px !important;
+        }
+        .event-name { font-size: 11px !important; line-height: 1.1 !important; }
+        .event-type { font-size: 9px !important; }
+
         /* Stack columns on mobile */
         [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; min-width: 100% !important; }
 
-        /* Hide side column and reduce gap on mobile to remove empty space */
+        /* Hide side column and reduce gap on mobile */
         [data-testid="column"]:nth-of-type(1) { 
             display: none !important; 
             height: 0 !important;
@@ -694,10 +708,6 @@ def local_css():
         }
         .main-layout { gap: 0px !important; margin-top: -30px !important; }
         .stVerticalBlock { gap: 0px !important; }
-        
-        /* Responsive text inside cards on mobile */
-        .event-name { font-size: 11px !important; }
-        .event-type { font-size: 9px !important; }
     }
 
     /* LANDSCAPE OPTIMIZATION */
