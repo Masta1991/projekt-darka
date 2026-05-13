@@ -989,14 +989,17 @@ with col_main:
             v_edit_active = "active" if st.session_state.edit_mode else ""
             edit_label = "✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ"
             
+            # Styl powiększający dla przycisków desktopowych
+            btn_style = "padding: 12px 24px; font-size: 15px;"
+            
             st.markdown(f"""
                 <div class="desktop-only" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1c1e; padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                         <div style="color: #8b949e; font-size: 14px; font-weight: 600;">WIDOK TYGODNIA {st.session_state.selected_week}</div>
                         <div style="display: flex; gap: 10px;">
-                            <div class="hdr-btn {v_day_active}" data-action="action=v_day">📱 DZIEŃ</div>
-                            <div class="hdr-btn {v_week_active}" data-action="action=v_week">📅 TYDZIEŃ</div>
-                            <div class="hdr-btn {v_edit_active}" data-action="action=v_edit">{edit_label}</div>
+                            <div class="hdr-btn {v_day_active}" style="{btn_style}" data-action="action=v_day">📱 DZIEŃ</div>
+                            <div class="hdr-btn {v_week_active}" style="{btn_style}" data-action="action=v_week">📅 TYDZIEŃ</div>
+                            <div class="hdr-btn {v_edit_active}" style="{btn_style}" data-action="action=v_edit">{edit_label}</div>
                         </div>
                     </div>
                 </div>
