@@ -1,6 +1,7 @@
 # --- ZASADA PRACY ---
-# Zmieniaj TYLKO to, o co prosi użytkownik. 
-# Jeśli zmiana wymaga modyfikacji innej części kodu, zapytaj o pozwolenie przed jej wprowadzeniem.
+# 1. Zmieniaj TYLKO to, o co prosi użytkownik. 
+# 2. PRZED każdą zmianą przedstaw propozycję i zapytaj o zgodę na wdrożenie.
+# 3. Jeśli zmiana wymaga modyfikacji innej części kodu, zapytaj o pozwolenie.
 # --------------------
 
 import streamlit as st
@@ -944,6 +945,8 @@ with col_side:
     # Square Dowodzenie Panel with Permanent Calendar
     # Hidden on Mobile - Desktop Only
     # ...
+    # --- [WIDOK: WSZYSTKIE] - [Element 1] Kalendarz Główny (Dowodzenie) ---
+    # (Stały element panelu bocznego)
     c = calendar.Calendar(firstweekday=0)
     month_cal = c.monthdatescalendar(st.session_state.mini_cal_date.year, st.session_state.mini_cal_date.month)
     months_pl = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
@@ -964,7 +967,7 @@ with col_side:
     dowodzenie_html = f"""<div class="desktop-only" style="background: linear-gradient(135deg, #1c1c1e 0%, #0d1117 100%); border: 1px solid rgba(49, 213, 242, 0.3); border-radius: 24px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; justify-content: space-between;"><div><div class="tile-label">DOWODZENIE</div><div style="font-size: 20px; font-weight: 800; color: white; margin-top: 10px;">{get_pl_date(sel_date)}</div></div><div style="font-size: 13px; color: #8b949e; margin-top: 5px; margin-bottom: 10px;">Zaplanowano <span class="stat-highlight">{len(day_workouts)}</span> treningów</div><div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;"><div style="display: justify; justify-content: space-between; font-size: 12px; margin-bottom: 10px; color: #8b949e; font-weight: 600;"><span>{month_str}</span><div style="float:right;"><span data-action="action=prev_month" style="cursor:pointer;">↑</span> <span data-action="action=next_month" style="margin-left:10px; cursor:pointer;">↓</span></div></div><div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px; font-weight: 500;">{grid_html}</div></div></div>"""
     st.markdown(dowodzenie_html, unsafe_allow_html=True)
 
-    # NOW we hide the Bento Tiles on Mobile
+    # --- [WIDOK: WSZYSTKIE] - [Element 4/9] Menu (Bento Tiles) ---
     st.markdown('<div class="mobile-sidebar-content">', unsafe_allow_html=True)
     bento_tile("ADMINISTRACJA", "Dodaj dane", "Treningi i pomiary", "tile_add_data_1778074195381.png", "add_data")
     bento_tile("ANALITYKA", "Wyniki", "Wykresy postępów", "tile_dashboard_1778074214113.png", "dashboard")
@@ -976,22 +979,27 @@ with col_side:
 
 with col_main:
     if st.session_state.page == "home":
-        # 1. Desktop Buttons at TOP
-        st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
-        col_hdr1, col_hdr_v, col_hdr2 = st.columns([3, 2, 1])
-        with col_hdr1:
-            st.markdown(f'<div style="color: #8b949e; font-size: 14px; font-weight: 600; padding: 10px 0;">WIDOK TYGODNIA {st.session_state.selected_week}</div>', unsafe_allow_html=True)
-        with col_hdr_v:
-            v_col1, v_col2 = st.columns(2)
-            if v_col1.button("📱 DZIEŃ", key="d_v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "dzień"; st.rerun()
-            if v_col2.button("📅 TYDZIEŃ", key="d_v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "tydzień"; st.rerun()
-        with col_hdr2:
-            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="d_v_edit_btn", on_click=toggle_edit, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # --- [WIDOK: GRAFIK] - [Element 2] Przyciski gorne (Desktop) ---
+        if st.session_state.get('show_upper_buttons', True):
+            v_day_active = "active" if st.session_state.calendar_view == "dzień" else ""
+            v_week_active = "active" if st.session_state.calendar_view == "tydzień" else ""
+            v_edit_active = "active" if st.session_state.edit_mode else ""
+            edit_label = "ZATWIERDZ" if st.session_state.edit_mode else "TRYB EDYCJI"
+            
+            st.markdown(f"""
+                <div class="desktop-only" style="margin-bottom: 20px; border: 2px solid orange; padding: 5px; border-radius: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #1c1c1e; padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="color: #8b949e; font-size: 14px; font-weight: 600;">WIDOK TYGODNIA {st.session_state.selected_week} (TEST)</div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="hdr-btn {v_day_active}" data-action="action=v_day">WIDOK DNIA</div>
+                            <div class="hdr-btn {v_week_active}" data-action="action=v_week">WIDOK TYG.</div>
+                            <div class="hdr-btn {v_edit_active}" data-action="action=v_edit">{edit_label}</div>
+                        </div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
-        # 2. Kalendarz zapisów
+        # --- [WIDOK: GRAFIK] - [Element 3] Kalendarz Zapisów ---
         try:
             edit_cls = "edit-mode-active" if st.session_state.edit_mode else ""
             all_days = ["PON", "WT", "ŚR", "CZW", "PT", "SOB"]
@@ -1047,18 +1055,8 @@ with col_main:
         except Exception as e:
             st.error(f"Błąd renderowania kalendarza: {e}")
 
-        # 3. Mobile Buttons at BOTTOM
-        st.markdown('<div class="mobile-only" style="margin-top: 20px;">', unsafe_allow_html=True)
-        col_m_hdr_v, col_m_hdr2 = st.columns([2, 1])
-        with col_m_hdr_v:
-            m_v_col1, m_v_col2 = st.columns(2)
-            if m_v_col1.button("📱 DZIEŃ", key="m_v_day_btn", type="primary" if st.session_state.calendar_view == "dzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "dzień"; st.rerun()
-            if m_v_col2.button("📅 TYDZIEŃ", key="m_v_week_btn", type="primary" if st.session_state.calendar_view == "tydzień" else "secondary", use_container_width=True):
-                st.session_state.calendar_view = "tydzień"; st.rerun()
-        with col_m_hdr2:
-            st.button("✅ KONIEC" if st.session_state.edit_mode else "⚙️ EDYTUJ", key="m_v_edit_btn", on_click=toggle_edit, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Uwaga: Mobilna wersja Elementu 2 znajduje się w nagłówku (Mobile Header) 
+        # i nie jest powielana na dole ekranu zgodnie z nowymi wytycznymi.
 
     elif st.session_state.page == "add_data":
         EXERCISES_DATA = {
@@ -1081,12 +1079,11 @@ with col_main:
 
         col_c, col_d, col_h = st.columns([2, 1, 1])
         with col_c:
-            # Fetch clients from Google Sheets
+            # --- [WIDOK: REJESTRACJA] - [Element 2] Lista Podopieczny ---
             def get_clients_list():
                 try:
                     df_c = st.session_state.dh.fetch_clients()
                     if not df_c.empty:
-                        # First column is assumed to be the client name
                         return df_c.iloc[:, 0].astype(str).tolist()
                 except Exception:
                     pass
@@ -1095,8 +1092,10 @@ with col_main:
             clients = get_clients_list()
             klient = st.selectbox("Podopieczny", clients, index=clients.index(q_client) if q_client in clients else 0)
         with col_d:
+            # --- [WIDOK: REJESTRACJA] - [Element 3] Data Treningu ---
             train_date = st.date_input("Data", value=datetime.datetime.strptime(q_day_str, "%Y-%m-%d").date() if q_day_str else st.session_state.selected_date)
         with col_h:
+            # --- [WIDOK: REJESTRACJA] - [Element 4] Godzina Treningu ---
             train_hour = st.selectbox("Godzina", list(range(6, 22)), index=max(0, q_hour - 6))
 
         # --- Smart Data Echo (Pre-fill existing results) ---
@@ -1147,12 +1146,17 @@ with col_main:
                 st.markdown(html, unsafe_allow_html=True)
 
         with c1:
+            # --- [WIDOK: REJESTRACJA] - [Element 5] Lista Główna Partia ---
             main_p = st.selectbox("Główna Partia", ["KLATKA PIERSIOWA", "PLECY", "NOGI", "BARKI", ""], index=0)
+            # --- [WIDOK: REJESTRACJA] - [Element 7] Przyciski dla Ćwiczeń ---
             render_exercise_section(main_p, EXERCISES_DATA)
         with c2:
+            # --- [WIDOK: REJESTRACJA] - [Element 6] Lista Partia Uzupełniająca ---
             extra_p = st.selectbox("Partia Uzupełniająca", ["TRICEPS", "BICEPS", "BRZUCH", "CARDIO", ""], index=0)
+            # --- [WIDOK: REJESTRACJA] - [Element 7] Przyciski dla Ćwiczeń (cd.) ---
             render_exercise_section(extra_p, EXERCISES_DATA)
         
+        # --- [WIDOK: REJESTRACJA] - [Element 8] Przyciski Dolne ---
         st.divider()
         f_col1, f_col2, f_col3 = st.columns([1, 1, 1])
         with f_col1:
