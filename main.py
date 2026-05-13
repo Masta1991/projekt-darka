@@ -617,8 +617,14 @@ def local_css():
         [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; min-width: 100% !important; }
 
         /* Hide side column and reduce gap on mobile to remove empty space */
-        [data-testid="column"]:nth-of-type(1) { display: none !important; }
-        .main-layout { gap: 0px !important; }
+        [data-testid="column"]:nth-of-type(1) { 
+            display: none !important; 
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .main-layout { gap: 0px !important; margin-top: -30px !important; }
+        .stVerticalBlock { gap: 0px !important; }
     }
 
     /* LANDSCAPE OPTIMIZATION */
@@ -635,65 +641,7 @@ local_css()
 # --- Actions via Hidden Input (CONSOLIDATED) ---
 js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibility="collapsed")
 
-# --- JS Bridge (Stable Version via Component) ---
-st.components.v1.html(f"""
-<script>
-const doc = window.parent.document;
-
-// 1. Theme CSS Injection (Forced Update)
-const styleId = 'trainer-pro-global-css';
-let existing = doc.getElementById(styleId);
-if (existing) existing.remove();
-const s = doc.createElement('style');
-s.id = styleId;
-s.innerHTML = `
-    /* STYLIZACJA LIST Z MAPY (2, 4, 5, 6) */
-    [role="listbox"], [role="option"], [role="option"] * {{
-        background-color: #1c1c1e !important;
-        color: white !important;
-    }}
-    /* Podświetlenie */
-    [role="option"]:hover, [role="option"][aria-selected="true"] {{
-        background-color: rgba(49, 213, 242, 0.1) !important;
-        color: #31d5f2 !important;
-    }}
-`;
-doc.head.appendChild(s);
-
-// 3. Action Bridge
-window.parent.sendActionToStreamlit = function(actionStr) {{
-    const inputs = doc.querySelectorAll('input');
-    let target = null;
-    inputs.forEach(i => {{ if(i.getAttribute('aria-label') === 'js_data_exchange') target = i; }});
-    if(target) {{
-        target.focus();
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-        setter.call(target, actionStr + '&ts=' + Date.now());
-        target.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        target.dispatchEvent(new Event('change', {{ bubbles: true }}));
-        target.blur();
-    }}
-}};
-
-// 4. Listeners (Re-binding with cleanup to prevent stale closures)
-if (window.parent.trainerClickHandler) {{
-    doc.body.removeEventListener('click', window.parent.trainerClickHandler);
-}}
-
-window.parent.trainerClickHandler = (e) => {{
-    const btn = e.target.closest('[data-action]');
-    if(btn) {{ 
-        e.preventDefault(); 
-        if (window.parent.sendActionToStreamlit) {{
-            window.parent.sendActionToStreamlit(btn.getAttribute('data-action'));
-        }}
-    }}
-}};
-
-doc.body.addEventListener('click', window.parent.trainerClickHandler);
-doc.body.setAttribute('data-bridge-v4', 'true');
-</script>
-""", height=0)
+# (JS Bridge moved to the end of file)
 
 # --- State Initialization ---
 if "authenticated" not in st.session_state:
@@ -1206,3 +1154,63 @@ with col_main:
         if st.button("POWRÓT"): st.session_state.page = "home"; st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# --- JS Bridge (Moved to End for Performance & Layout) ---
+st.components.v1.html(f"""
+<script>
+const doc = window.parent.document;
+
+// 1. Theme CSS Injection (Forced Update)
+const styleId = 'trainer-pro-global-css';
+let existing = doc.getElementById(styleId);
+if (existing) existing.remove();
+const s = doc.createElement('style');
+s.id = styleId;
+s.innerHTML = `
+    /* STYLIZACJA LIST Z MAPY (2, 4, 5, 6) */
+    [role="listbox"], [role="option"], [role="option"] * {{
+        background-color: #1c1c1e !important;
+        color: white !important;
+    }}
+    /* Podświetlenie */
+    [role="option"]:hover, [role="option"][aria-selected="true"] {{
+        background-color: rgba(49, 213, 242, 0.1) !important;
+        color: #31d5f2 !important;
+    }}
+`;
+doc.head.appendChild(s);
+
+// 3. Action Bridge
+window.parent.sendActionToStreamlit = function(actionStr) {{
+    const inputs = doc.querySelectorAll('input');
+    let target = null;
+    inputs.forEach(i => {{ if(i.getAttribute('aria-label') === 'js_data_exchange') target = i; }});
+    if(target) {{
+        target.focus();
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(target, actionStr + '&ts=' + Date.now());
+        target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+        target.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        target.blur();
+    }}
+}};
+
+// 4. Listeners (Re-binding with cleanup to prevent stale closures)
+if (window.parent.trainerClickHandler) {{
+    doc.body.removeEventListener('click', window.parent.trainerClickHandler);
+}}
+
+window.parent.trainerClickHandler = (e) => {{
+    const btn = e.target.closest('[data-action]');
+    if(btn) {{ 
+        e.preventDefault(); 
+        if (window.parent.sendActionToStreamlit) {{
+            window.parent.sendActionToStreamlit(btn.getAttribute('data-action'));
+        }}
+    }}
+}};
+
+doc.body.addEventListener('click', window.parent.trainerClickHandler);
+doc.body.setAttribute('data-bridge-v4', 'true');
+</script>
+""", height=0)
