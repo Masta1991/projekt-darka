@@ -263,11 +263,45 @@ def local_css():
         background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); 
         padding: 20px; overflow-x: auto;
     }
-    .calendar-grid-header { display: grid; gap: 10px; margin-bottom: 15px; }
-    .day-header { text-align: center; color: #8b949e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .day-header.today { color: #31d5f2; }
+    .calendar-grid-header {
+        display: grid;
+        background: #1c1c1e;
+        border-bottom: 2px solid rgba(255,255,255,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .day-header {
+        padding: 12px 5px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 13px;
+        color: #8b949e;
+        border-left: 1px solid rgba(255,255,255,0.03);
+        background: #1c1c1e;
+    }
+    .day-header:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 110;
+        background: #1c1c1e;
+        border-left: none;
+    }
+    .day-header.today { color: #31d5f2; background: rgba(49, 213, 242, 0.05); }
     .calendar-row { display: grid; gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
-    .time-col { color: #444; font-size: 11px; font-weight: 700; padding-top: 10px; text-align: right; padding-right: 15px; }
+    .time-col {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #555;
+        font-weight: 700;
+        background: #1c1c1e;
+        position: sticky;
+        left: 0;
+        z-index: 90;
+        border-right: 1px solid rgba(255,255,255,0.05);
+    }
     .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 120px; }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
 
