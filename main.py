@@ -288,7 +288,7 @@ def local_css():
         border-left: none;
     }
     .day-header.today { color: #31d5f2; background: rgba(49, 213, 242, 0.05); }
-    .calendar-row { display: grid; gap: 10px; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
+    .calendar-row { display: grid; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
     .time-col {
         display: flex;
         align-items: center;
@@ -301,6 +301,7 @@ def local_css():
         left: 0;
         z-index: 90;
         border-right: 1px solid rgba(255,255,255,0.05);
+        width: 60px;
     }
     .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 120px; }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
@@ -642,12 +643,14 @@ def local_css():
         /* Responsive columns based on view type */
         .calendar-wrapper.view-week .calendar-grid-header, 
         .calendar-wrapper.view-week .calendar-row {
-            grid-template-columns: 50px repeat(6, 100px) !important;
+            grid-template-columns: 60px repeat(6, 100px) !important;
+            gap: 0px !important;
         }
         
         .calendar-wrapper.view-day .calendar-grid-header, 
         .calendar-wrapper.view-day .calendar-row {
-            grid-template-columns: 50px 1fr !important;
+            grid-template-columns: 60px 1fr !important;
+            gap: 0px !important;
         }.block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         .exercise-row { height: 70px; padding: 0 15px; }
         .pill-container { height: 44px; gap: 8px; }
