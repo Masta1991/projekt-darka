@@ -266,10 +266,10 @@ def local_css():
     .calendar-grid-header {
         display: grid;
         background: #1c1c1e;
-        border-bottom: 2px solid rgba(255,255,255,0.05);
+        border-bottom: 2px solid #31d5f2;
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: 105;
     }
     .day-header {
         padding: 12px 5px;
@@ -277,15 +277,16 @@ def local_css():
         font-weight: 800;
         font-size: 13px;
         color: #8b949e;
-        border-left: 1px solid rgba(255,255,255,0.03);
         background: #1c1c1e;
     }
     .day-header:first-child {
         position: sticky;
         left: 0;
+        top: 0;
         z-index: 110;
         background: #1c1c1e;
-        border-left: none;
+        width: 70px;
+        min-width: 70px;
     }
     .day-header.today { color: #31d5f2; background: rgba(49, 213, 242, 0.05); }
     .calendar-row { display: grid; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
@@ -299,9 +300,11 @@ def local_css():
         background: #1c1c1e;
         position: sticky;
         left: 0;
-        z-index: 90;
+        z-index: 101;
+        width: 70px;
+        min-width: 70px;
         border-right: 1px solid rgba(255,255,255,0.05);
-        width: 60px;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.3);
     }
     .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 120px; }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
@@ -643,13 +646,13 @@ def local_css():
         /* Responsive columns based on view type */
         .calendar-wrapper.view-week .calendar-grid-header, 
         .calendar-wrapper.view-week .calendar-row {
-            grid-template-columns: 60px repeat(6, 100px) !important;
+            grid-template-columns: 70px repeat(6, 100px) !important;
             gap: 0px !important;
         }
         
         .calendar-wrapper.view-day .calendar-grid-header, 
         .calendar-wrapper.view-day .calendar-row {
-            grid-template-columns: 60px 1fr !important;
+            grid-template-columns: 70px 1fr !important;
             gap: 0px !important;
         }.block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         .exercise-row { height: 70px; padding: 0 15px; }
@@ -1009,10 +1012,10 @@ with col_main:
             
             if st.session_state.calendar_view == "dzień":
                 show_days_indices = [sel_date.weekday()] if sel_date.weekday() < 6 else [0]
-                cols_css = "grid-template-columns: 60px 1fr;"
+                cols_css = "grid-template-columns: 70px 1fr;"
             else:
                 show_days_indices = list(range(6))
-                cols_css = "grid-template-columns: 60px repeat(6, 1fr);"
+                cols_css = "grid-template-columns: 70px repeat(6, 1fr);"
             
             view_type_cls = "view-day" if st.session_state.calendar_view == "dzień" else "view-week"
             full_html = f'<div class="calendar-wrapper {edit_cls} {view_type_cls}">'
