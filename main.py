@@ -742,19 +742,20 @@ def check_password():
             st.rerun()
         return True
 
-    # Check localStorage for valid session via Bridge (Safe for Cloud)
+    # Check localStorage for valid session via Self-Contained Script
     st.components.v1.html(f"""
     <script>
     const authTs = window.localStorage.getItem('trainer_auth_ts');
     if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {{
-        // Use the main bridge to send auto_login action
-        if (window.parent.sendActionToStreamlit) {{
-            window.parent.sendActionToStreamlit('action=auto_login');
-        }} else {{
-            // Fallback if bridge not yet ready
-            setTimeout(() => {{
-                if (window.parent.sendActionToStreamlit) window.parent.sendActionToStreamlit('action=auto_login');
-            }}, 500);
+        const doc = window.parent.document;
+        const inputs = doc.querySelectorAll('input');
+        let target = null;
+        inputs.forEach(i => {{ if(i.getAttribute('aria-label') === 'js_data_exchange') target = i; }});
+        if(target) {{
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(target, 'action=auto_login&ts=' + Date.now());
+            target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            target.dispatchEvent(new Event('change', {{ bubbles: true }}));
         }}
     }}
     </script>
