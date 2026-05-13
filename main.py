@@ -233,7 +233,9 @@ def local_css():
     }
 
     /* Layout */
-    .main-layout { display: flex; gap: 30px; }
+    .main-layout { display: flex; gap: 20px; overflow: visible !important; }
+    [data-testid="stVerticalBlock"] { overflow: visible !important; }
+    [data-testid="stHorizontalBlock"] { overflow: visible !important; }
     
     /* Tile Link Styling - Sidebar */
     .tile-link {
@@ -265,10 +267,10 @@ def local_css():
     }
     .calendar-grid-header {
         display: grid;
-        background: #1c1c1e;
+        background: #1c1c1e !important;
         border-bottom: 2px solid #31d5f2;
-        position: sticky;
-        top: 0;
+        position: sticky !important;
+        top: 0px !important;
         z-index: 105;
     }
     .day-header {
@@ -306,7 +308,11 @@ def local_css():
         border-right: 1px solid rgba(255,255,255,0.05);
         box-shadow: 2px 0 5px rgba(0,0,0,0.3);
     }
-    .calendar-cell { position: relative; border-radius: 12px; background: rgba(255,255,255,0.01); transition: background 0.2s; border: 1px solid transparent; min-width: 120px; }
+    .calendar-cell { 
+        position: relative; 
+        transition: background 0.2s; 
+        min-width: 120px; 
+    }
     .calendar-cell:hover { background: rgba(255,255,255,0.03); }
 
     /* Event Card */
