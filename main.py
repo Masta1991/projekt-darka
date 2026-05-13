@@ -261,6 +261,7 @@ def local_css():
     .tile-desc { font-size: 11px; color: #8b949e; line-height: 1.2; }
 
     /* Calendar Premium Grid */
+    .calendar-wrapper * { box-sizing: border-box; }
     .calendar-wrapper { 
         background: #1c1c1e; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); 
         padding: 20px; overflow-x: auto;
@@ -272,6 +273,8 @@ def local_css():
         position: sticky !important;
         top: 0px !important;
         z-index: 105;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     .day-header {
         padding: 12px 5px;
@@ -292,7 +295,13 @@ def local_css():
         min-width: 70px;
     }
     .day-header.today { color: #31d5f2; background: rgba(49, 213, 242, 0.05); }
-    .calendar-row { display: grid; min-height: 80px; border-top: 1px solid rgba(255,255,255,0.03); }
+    .calendar-row { 
+        display: grid; 
+        min-height: 80px; 
+        border-top: 1px solid rgba(255,255,255,0.03); 
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     .time-col {
         display: flex;
         align-items: center;
