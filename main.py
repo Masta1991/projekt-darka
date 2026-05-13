@@ -894,7 +894,7 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         action = parts.get('action')
         if action == "auto_login":
             st.session_state.authenticated = True
-            st.session_state.login_ts = time.time()
+            st.session_state.last_auth_time = time.time()
             st.rerun()
         elif action == "toggle_exercise":
             ex_name = parts.get("ex")
