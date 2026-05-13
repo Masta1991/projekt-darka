@@ -747,7 +747,15 @@ def check_password():
     <script>
     const authTs = window.localStorage.getItem('trainer_auth_ts');
     if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {{
-        window.parent.defaultView.sendActionToStreamlit('action=auto_login');
+        // Use the main bridge to send auto_login action
+        if (window.parent.sendActionToStreamlit) {{
+            window.parent.sendActionToStreamlit('action=auto_login');
+        }} else {{
+            // Fallback if bridge not yet ready
+            setTimeout(() => {{
+                if (window.parent.sendActionToStreamlit) window.parent.sendActionToStreamlit('action=auto_login');
+            }}, 500);
+        }}
     }}
     </script>
     """, height=0)
@@ -791,7 +799,7 @@ if not check_password():
 # Save login to localStorage
 if st.session_state.get('save_login'):
     st.session_state.save_login = False
-    components.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
+    st.components.v1.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
 # --- Navigation & Page Persistence ---
 if "page" not in st.session_state:
