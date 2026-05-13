@@ -786,6 +786,12 @@ def manage_auth():
         else:
             if pwd: st.error("❌ Błędny kod")
 
+    # Critical: Save auth to localStorage BEFORE st.stop()
+    if st.session_state.get('pending_auth_save'):
+        st.session_state.pending_auth_save = False
+        st.components.v1.html(f"<script>window.localStorage.setItem('trainer_auth_ts', '{int(time.time() * 1000)}');</script>", height=0)
+        st.rerun()
+
     st.markdown("""
     <style>
         .block-container { padding-top: 5rem !important; }
@@ -811,11 +817,6 @@ def manage_auth():
 
 if not manage_auth():
     st.stop()
-
-# Handle Session Saving
-if st.session_state.get('pending_auth_save'):
-    st.session_state.pending_auth_save = False
-    st.components.v1.html(f"<script>window.localStorage.setItem('trainer_auth_ts', '{int(time.time() * 1000)}');</script>", height=0)
 
 # --- Navigation & Page Persistence ---
 if "page" not in st.session_state:
