@@ -727,96 +727,80 @@ js_data = st.text_input("js_data_exchange", key="js_data_input", label_visibilit
 # (JS Bridge moved to the end of file)
 
 # --- State Initialization ---
-# --- PERSISTENT AUTHENTICATION SYSTEM (4H) ---
-def manage_auth():
-    # 1. Initialization
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-    
-    if 'dh' not in st.session_state:
-        st.session_state.dh = DataHandler()
-        
-    # 2. Expiry Check (4 Hours)
-    if st.session_state.authenticated:
-        last_auth = st.session_state.get('last_auth_time', 0)
-        if time.time() - last_auth > 14400:
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if 'dh' not in st.session_state:
+    st.session_state.dh = DataHandler()
+
+# --- Authentication Logic ---
+def check_password():
+    if st.session_state.get('authenticated'):
+        login_ts = st.session_state.get('login_ts', 0)
+        if time.time() - login_ts > 14400:
             st.session_state.authenticated = False
             st.rerun()
         return True
 
-    # 3. Session Restoration Script (localStorage -> Streamlit)
-    st.components.v1.html("""
+    # Check localStorage for valid session via Self-Contained Script
+    st.components.v1.html(f"""
     <script>
-    function attemptAuthRestoration() {
-        const authTs = window.localStorage.getItem('trainer_auth_ts');
-        if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {
-            const doc = window.parent.document;
-            const inputs = doc.querySelectorAll('input');
-            let target = null;
-            inputs.forEach(i => { if(i.getAttribute('aria-label') === 'js_data_exchange') target = i; });
-            
-            if(target) {
-                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                setter.call(target, 'action=auto_login&ts=' + Date.now());
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    let attempts = 0;
-    const interval = setInterval(() => {
-        if (attemptAuthRestoration() || attempts > 10) clearInterval(interval);
-        attempts++;
-    }, 500);
+    const authTs = window.localStorage.getItem('trainer_auth_ts');
+    if (authTs && (Date.now() - parseInt(authTs)) < 14400000) {{
+        const doc = window.parent.document;
+        const inputs = doc.querySelectorAll('input');
+        let target = null;
+        inputs.forEach(i => {{ if(i.getAttribute('aria-label') === 'js_data_exchange') target = i; }});
+        if(target) {{
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(target, 'action=auto_login&ts=' + Date.now());
+            target.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            target.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        }}
+    }}
     </script>
     """, height=0)
 
-    # 4. Login UI
-    def on_login():
+    def password_entered():
         access_code = st.secrets.get("access_code", "170491")
-        pwd = st.session_state.get("login_input", "")
+        pwd = st.session_state.get("password", "")
         if pwd == access_code:
             st.session_state.authenticated = True
-            st.session_state.last_auth_time = time.time()
-            st.session_state.pending_auth_save = True
-            st.session_state.login_input = ""
+            st.session_state.login_ts = time.time()
+            st.session_state.save_login = True
+            st.session_state.password = "" 
         else:
-            if pwd: st.error("❌ Błędny kod")
-
-    # Critical: Save auth to localStorage BEFORE st.stop()
-    if st.session_state.get('pending_auth_save'):
-        st.session_state.pending_auth_save = False
-        st.components.v1.html(f"<script>window.localStorage.setItem('trainer_auth_ts', '{int(time.time() * 1000)}');</script>", height=0)
-        st.rerun()
+            if pwd: st.error("❌ Błędny kod dostępu")
 
     st.markdown("""
     <style>
-        .block-container { padding-top: 5rem !important; }
-        .login-box { text-align: center; max-width: 400px; margin: 0 auto; }
-        div[data-testid="stTextInput"] input {
-            background-color: #0d1117 !important; color: #31d5f2 !important;
-            border: 2px solid #31d5f2 !important; border-radius: 12px !important;
-            text-align: center !important; font-size: 32px !important;
-            padding: 20px !important;
+        .block-container { padding-top: 3rem !important; }
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div { min-height: 130px !important; }
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div > div { min-height: 130px !important; border-radius: 16px !important; }
+        div[data-testid="stTextInput"]:has(input[aria-label="Kod"]) > div > div > input {
+            background-color: #0d1117 !important; color: white !important;
+            border: 3px solid #31d5f2 !important; border-radius: 16px !important;
+            text-align: center !important; font-size: 48px !important;
+            letter-spacing: 18px !important; min-height: 130px !important;
+            padding: 40px 16px !important; caret-color: #31d5f2 !important;
         }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<h1 style="font-size:48px; color:#31d5f2; margin-bottom:10px;">TRAINER PRO</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color:#8b949e; margin-bottom:30px;">Wprowadź kod dostępu</p>', unsafe_allow_html=True)
-    
-    st.text_input("Kod", type="password", key="login_input", on_change=on_login, label_visibility="collapsed")
-    st.button("ZALOGUJ", on_click=on_login, use_container_width=True, type="primary")
+    st.markdown('<div style="text-align:center; margin-top:60px;"><h1 style="font-size:60px; font-weight:900; background: linear-gradient(135deg, #31d5f2, #2196F3); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">TRAINER PRO</h1><p style="color: #8b949e; font-size:14px;">Wprowadź kod dostępu</p></div>', unsafe_allow_html=True)
+    st.text_input("Kod", type="password", key="password", on_change=password_entered, label_visibility="collapsed")
+    st.markdown('<div style="text-align:center; margin-top:20px;">', unsafe_allow_html=True)
+    st.button("🔐 ZALOGUJ", on_click=password_entered, use_container_width=True, type="primary")
     st.markdown('</div>', unsafe_allow_html=True)
-    
     return False
 
-if not manage_auth():
+if not check_password():
     st.stop()
+
+# Save login to localStorage
+if st.session_state.get('save_login'):
+    st.session_state.save_login = False
+    st.components.v1.html('<script>window.localStorage.setItem("trainer_auth_ts", Date.now().toString());</script>', height=0)
 
 # --- Navigation & Page Persistence ---
 if "page" not in st.session_state:
@@ -895,7 +879,7 @@ if js_data and js_data != st.session_state.get('last_js_data', ''):
         action = parts.get('action')
         if action == "auto_login":
             st.session_state.authenticated = True
-            st.session_state.last_auth_time = time.time()
+            st.session_state.login_ts = time.time()
             st.rerun()
         elif action == "toggle_exercise":
             ex_name = parts.get("ex")
