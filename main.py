@@ -615,6 +615,10 @@ def local_css():
         
         /* Stack columns on mobile */
         [data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; min-width: 100% !important; }
+
+        /* Hide side column and reduce gap on mobile to remove empty space */
+        [data-testid="column"]:nth-of-type(1) { display: none !important; }
+        .main-layout { gap: 0px !important; }
     }
 
     /* LANDSCAPE OPTIMIZATION */
