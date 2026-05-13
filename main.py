@@ -605,8 +605,16 @@ def local_css():
     @media (max-width: 1000px) {
         .mobile-header { display: flex; }
         .calendar-wrapper { padding: 10px; border-radius: 16px; min-width: unset !important; overflow-x: auto; }
-        .calendar-grid-header, .calendar-row { min-width: 800px; }
-        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+        /* Responsive columns based on view type */
+        .calendar-wrapper.view-week .calendar-grid-header, 
+        .calendar-wrapper.view-week .calendar-row {
+            grid-template-columns: 50px repeat(6, 100px) !important;
+        }
+        
+        .calendar-wrapper.view-day .calendar-grid-header, 
+        .calendar-wrapper.view-day .calendar-row {
+            grid-template-columns: 50px 1fr !important;
+        }.block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
         .exercise-row { height: 70px; padding: 0 15px; }
         .pill-container { height: 44px; gap: 8px; }
         .pill-btn { width: 28px; height: 28px; font-size: 18px; }
@@ -969,7 +977,8 @@ with col_main:
                 show_days_indices = list(range(6))
                 cols_css = "grid-template-columns: 60px repeat(6, 1fr);"
             
-            full_html = f'<div class="calendar-wrapper {edit_cls}">'
+            view_type_cls = "view-day" if st.session_state.calendar_view == "dzień" else "view-week"
+            full_html = f'<div class="calendar-wrapper {edit_cls} {view_type_cls}">'
             full_html += f'<div class="calendar-grid-header" style="{cols_css}"><div class="day-header"></div>'
             
             # Calculate dates for the selected week
