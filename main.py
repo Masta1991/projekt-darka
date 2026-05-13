@@ -324,10 +324,14 @@ def local_css():
         transition: all 0.2s; position: relative; user-select: none;
         display: flex; flex-direction: column; justify-content: center;
         width: calc(100% - 4px); box-sizing: border-box;
+        min-width: 0; overflow: hidden;
     }
     .event-card:hover { transform: translateY(-2px); background: rgba(49, 213, 242, 0.2); }
-    .event-name { font-weight: 800; font-size: 13px; color: white; margin-bottom: 2px; }
-    .event-type { font-size: 10px; color: #8b949e; }
+    .event-name { 
+        font-weight: 800; font-size: 13px; color: white; margin-bottom: 2px; 
+        line-height: 1.2; word-wrap: break-word; white-space: normal;
+    }
+    .event-type { font-size: 10px; color: #8b949e; word-wrap: break-word; white-space: normal; }
 
     /* Delete Button */
     .delete-btn {
@@ -681,6 +685,10 @@ def local_css():
         }
         .main-layout { gap: 0px !important; margin-top: -30px !important; }
         .stVerticalBlock { gap: 0px !important; }
+        
+        /* Responsive text inside cards on mobile */
+        .event-name { font-size: 11px !important; }
+        .event-type { font-size: 9px !important; }
     }
 
     /* LANDSCAPE OPTIMIZATION */
